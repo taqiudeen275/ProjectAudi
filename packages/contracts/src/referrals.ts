@@ -35,4 +35,3 @@ export interface Referral {
   readonly createdAt: IsoTimestamp;
   readonly updatedAt: IsoTimestamp;
 }
-

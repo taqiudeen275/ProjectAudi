@@ -183,8 +183,8 @@ const modelHealth: readonly {
   metric: string;
 }[] = [
   { family: "qwen3TtsBase06b", name: "Qwen3-TTS 0.6B", route: "Fast · English candidate", health: "warning", metric: "Evaluating" },
-  { family: "luxTts", name: "LuxTTS", route: "Fast · CPU fallback", health: "healthy", metric: "98.9%" },
-  { family: "tada3b", name: "TADA 3B", route: "Studio · Multilingual Beta", health: "warning", metric: "1.4× RTF" },
+  { family: "luxTts", name: "LuxTTS", route: "Fast · English candidate", health: "warning", metric: "Evaluating" },
+  { family: "tada3b", name: "TADA 3B", route: "Studio · Language candidates pending", health: "warning", metric: "Evaluating" },
   { family: "fishS2Pro", name: "Fish S2-Pro", route: "Commercial route", health: "blocked", metric: "License gate" },
 ];
 

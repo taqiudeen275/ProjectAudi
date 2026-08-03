@@ -142,4 +142,3 @@ export interface ModelRoute {
   readonly effectiveFrom: IsoTimestamp;
   readonly effectiveUntil: IsoTimestamp | null;
 }
-

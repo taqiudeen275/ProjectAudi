@@ -175,4 +175,3 @@ export interface RightsDeclaration {
   readonly evidenceAssetIds: readonly AssetId[];
   readonly attestedAt: IsoTimestamp;
 }
-

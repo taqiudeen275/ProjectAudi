@@ -275,6 +275,34 @@ function PriceLabel({ book }: { book: Book }) {
   );
 }
 
+function ProvenanceBadge({
+  book,
+  compact = false,
+}: {
+  book: Book;
+  compact?: boolean;
+}) {
+  const disclosureDetail = book.provenance.disclosures.length
+    ? `${book.provenance.disclosures.length} AI provenance ${
+        book.provenance.disclosures.length === 1 ? "label" : "labels"
+      } recorded`
+    : "No AI narration disclosure labels";
+
+  return (
+    <span
+      className={`provenance-label${compact ? " provenance-label-compact" : ""}`}
+      data-narration={book.provenance.narration}
+      title={disclosureDetail}
+    >
+      <Icon
+        name={book.provenance.narration === "human" ? "user" : "sparkles"}
+        size={compact ? 12 : 13}
+      />
+      <span>{book.provenance.label}</span>
+    </span>
+  );
+}
+
 function SectionHeading({
   id,
   eyebrow,
@@ -330,6 +358,7 @@ function ContinueCard({
         <span className="continue-label">Continue listening</span>
         <h3>{book.title}</h3>
         <p>{book.creator}</p>
+        <ProvenanceBadge book={book} compact />
         <p className="current-unit">{book.currentUnit}</p>
         <div className="card-progress" aria-hidden="true">
           <span style={{ width: `${book.progress}%` }} />
@@ -398,10 +427,7 @@ function BookCard({
           <PriceLabel book={book} />
           <span className="duration">{book.duration}</span>
         </div>
-        <p className="provenance-label">
-          <Icon name="sparkles" size={13} />
-          {book.provenance}
-        </p>
+        <ProvenanceBadge book={book} />
       </div>
     </article>
   );
@@ -447,6 +473,7 @@ function SerialCard({
         </div>
         <h3>{book.title}</h3>
         <p className="book-creator">{book.creator}</p>
+        <ProvenanceBadge book={book} compact />
         <p className="serial-description">{book.description}</p>
         <p className="episode-label">{book.episode}</p>
         <div className="serial-actions">
@@ -479,7 +506,10 @@ function UnlockDialog({
   onConfirm: () => void;
 }) {
   const dialogRef = useRef<HTMLDialogElement>(null);
+  const isFree = book.price === "free";
   const coinPrice = book.price === "free" ? 0 : book.price;
+  const shortfall = Math.max(0, coinPrice - balance);
+  const canPreview = isFree || shortfall === 0;
 
   useEffect(() => {
     const dialog = dialogRef.current;
@@ -491,6 +521,7 @@ function UnlockDialog({
 
   return (
     <dialog
+      aria-describedby="interaction-preview-note"
       aria-labelledby="unlock-dialog-title"
       className="unlock-dialog"
       onCancel={onClose}
@@ -503,7 +534,7 @@ function UnlockDialog({
       <div className="dialog-content">
         <div className="dialog-heading">
           <div className="dialog-icon">
-            <Icon name="coin" size={24} />
+            <Icon name={isFree ? "library" : "coin"} size={24} />
           </div>
           <button
             aria-label="Close unlock confirmation"
@@ -514,17 +545,26 @@ function UnlockDialog({
             <Icon name="close" />
           </button>
         </div>
-        <p className="section-eyebrow">Permanent access</p>
-        <h2 id="unlock-dialog-title">Unlock {book.title}?</h2>
+        <div className="interaction-preview-notice" id="interaction-preview-note">
+          <strong>Interaction preview</strong>
+          <span>No charge · no entitlement · no account changes</span>
+        </div>
+        <p className="section-eyebrow">
+          {isFree ? "Free Library flow" : "Reader Coin unlock flow"}
+        </p>
+        <h2 id="unlock-dialog-title">
+          Preview {isFree ? "adding" : "unlocking"} {book.title}?
+        </h2>
         <p className="dialog-description">
-          The complete audiobook will be added to your Library and remain
-          available after ordinary delisting or later price changes.
+          This front-end milestone demonstrates the future confirmation flow.
+          It does not contact AudiLink wallet or entitlement services, change
+          your balance, or add this title to your real Library.
         </p>
 
         <div className="unlock-scope">
           <Cover compact title={book.title} tone={book.cover} />
           <div>
-            <span>Unlock scope</span>
+            <span>Planned access scope</span>
             <strong>Complete audiobook</strong>
             <small>{book.duration} · all chapters</small>
           </div>
@@ -536,27 +576,45 @@ function UnlockDialog({
             <dd>{balance} Reader Coins</dd>
           </div>
           <div>
-            <dt>Promotional Coins used first</dt>
-            <dd>−{coinPrice} Reader Coins</dd>
+            <dt>{isFree ? "Planned access price" : "Planned unlock price"}</dt>
+            <dd>{isFree ? "Free" : `${coinPrice} Reader Coins`}</dd>
           </div>
+          {shortfall > 0 ? (
+            <div className="coin-shortfall">
+              <dt>Reader Coin shortfall</dt>
+              <dd>{shortfall} Reader Coins</dd>
+            </div>
+          ) : null}
           <div className="coin-result">
-            <dt>Balance after unlock</dt>
-            <dd>{balance - coinPrice} Reader Coins</dd>
+            <dt>Balance after this preview</dt>
+            <dd>{balance} Reader Coins · unchanged</dd>
           </div>
         </dl>
 
         <p className="dialog-note">
-          Your promotional balance expires October 14, 2026. Purchased Reader
-          Coins never expire.
+          {isFree
+            ? "Free titles do not spend Reader Coins. The production flow will still create and verify a Library entitlement."
+            : shortfall > 0
+            ? `You need ${shortfall} more Reader Coins before the real unlock flow can continue.`
+            : "Purchased Reader Coins never expire. A production unlock will show the exact lots used before you confirm."}
         </p>
 
         <div className="dialog-actions">
           <button className="secondary-button" onClick={onClose} type="button">
             Not now
           </button>
-          <button className="primary-button" onClick={onConfirm} type="button">
-            <Icon name="coin" size={17} />
-            Unlock for {coinPrice} Reader Coins
+          <button
+            className="primary-button"
+            disabled={!canPreview}
+            onClick={onConfirm}
+            type="button"
+          >
+            <Icon name={isFree ? "library" : "coin"} size={17} />
+            {shortfall > 0
+              ? `Need ${shortfall} more Reader Coins`
+              : isFree
+                ? "Preview Add free to Library"
+                : `Preview unlock for ${coinPrice} Reader Coins`}
           </button>
         </div>
       </div>
@@ -568,6 +626,8 @@ function PersistentPlayer({
   book,
   progress,
   playing,
+  preview,
+  maxProgress,
   speed,
   onProgress,
   onToggle,
@@ -577,6 +637,8 @@ function PersistentPlayer({
   book: Book;
   progress: number;
   playing: boolean;
+  preview: boolean;
+  maxProgress: number;
   speed: number;
   onProgress: (value: number) => void;
   onToggle: () => void;
@@ -585,13 +647,24 @@ function PersistentPlayer({
 }) {
   const [muted, setMuted] = useState(false);
   const [queueOpen, setQueueOpen] = useState(false);
-  const totalSeconds = durationToSeconds(book.duration);
-  const elapsed = Math.round((progress / 100) * totalSeconds);
-  const currentLabel =
-    book.episode ??
-    ("currentUnit" in book && typeof book.currentUnit === "string"
-      ? book.currentUnit
-      : "Preview");
+  const bookDurationSeconds = durationToSeconds(book.duration);
+  const playbackDurationSeconds = preview
+    ? Math.min(book.previewDurationSeconds, bookDurationSeconds)
+    : bookDurationSeconds;
+  const elapsed = Math.min(
+    Math.round((progress / 100) * bookDurationSeconds),
+    playbackDurationSeconds,
+  );
+  const visualProgress = Math.min(
+    100,
+    maxProgress > 0 ? (progress / maxProgress) * 100 : 0,
+  );
+  const currentLabel = preview
+    ? `Preview · ${formatClock(playbackDurationSeconds)}`
+    : book.episode ??
+      ("currentUnit" in book && typeof book.currentUnit === "string"
+        ? book.currentUnit
+        : "Full audiobook");
 
   return (
     <aside
@@ -606,7 +679,8 @@ function PersistentPlayer({
               {playing ? "Now playing" : "Ready to listen"}
             </span>
             <strong>{book.title}</strong>
-            <span>{currentLabel}</span>
+            <span className="player-unit">{currentLabel}</span>
+            <ProvenanceBadge book={book} compact />
           </div>
         </div>
 
@@ -615,6 +689,7 @@ function PersistentPlayer({
             <button
               aria-label="Previous chapter"
               className="player-icon"
+              disabled={preview}
               onClick={() => onProgress(Math.max(0, progress - 8))}
               type="button"
             >
@@ -647,7 +722,8 @@ function PersistentPlayer({
             <button
               aria-label="Next chapter"
               className="player-icon"
-              onClick={() => onProgress(Math.min(100, progress + 8))}
+              disabled={preview}
+              onClick={() => onProgress(Math.min(maxProgress, progress + 8))}
               type="button"
             >
               <Icon name="next" size={19} />
@@ -656,18 +732,23 @@ function PersistentPlayer({
           <div className="player-timeline">
             <span>{formatClock(elapsed)}</span>
             <input
-              aria-label={`Playback position, ${Math.round(progress)} percent`}
-              max="100"
+              aria-label={preview ? "Preview playback position" : "Playback position"}
+              aria-valuetext={`${formatClock(elapsed)} of ${formatClock(
+                playbackDurationSeconds,
+              )}${preview ? " preview" : ""}`}
+              max={maxProgress}
               min="0"
               onChange={(event) => onProgress(Number(event.target.value))}
-              step="0.1"
+              step="0.01"
               style={{
-                background: `linear-gradient(to right, var(--amber) 0%, var(--amber) ${progress}%, var(--track) ${progress}%, var(--track) 100%)`,
+                background: `linear-gradient(to right, var(--amber) 0%, var(--amber) ${visualProgress}%, var(--track) ${visualProgress}%, var(--track) 100%)`,
               }}
               type="range"
               value={progress}
             />
-            <span>−{formatClock(Math.max(totalSeconds - elapsed, 0))}</span>
+            <span>
+              −{formatClock(Math.max(playbackDurationSeconds - elapsed, 0))}
+            </span>
           </div>
         </div>
 
@@ -696,15 +777,18 @@ function PersistentPlayer({
           </button>
           <button
             aria-controls="player-queue"
-            aria-expanded={queueOpen}
-            aria-label="Open chapter queue"
+            aria-expanded={!preview && queueOpen}
+            aria-label={
+              preview ? "Chapter queue unavailable during preview" : "Open chapter queue"
+            }
             className="player-icon"
+            disabled={preview}
             onClick={() => setQueueOpen((current) => !current)}
             type="button"
           >
             <Icon name="list" size={20} />
           </button>
-          {queueOpen ? (
+          {queueOpen && !preview ? (
             <div className="player-queue" id="player-queue">
               <span>Up next</span>
               <strong>{book.format === "Serial" ? "Next episode" : "Next chapter"}</strong>
@@ -721,6 +805,11 @@ function durationToSeconds(duration: string) {
   const hours = Number(duration.match(/(\d+)h/)?.[1] ?? 0);
   const minutes = Number(duration.match(/(\d+)m/)?.[1] ?? 30);
   return Math.max(hours * 3600 + minutes * 60, 60);
+}
+
+function previewProgressLimit(book: Book) {
+  const duration = durationToSeconds(book.duration);
+  return Math.min(100, (book.previewDurationSeconds / duration) * 100);
 }
 
 function formatClock(seconds: number) {
@@ -743,17 +832,19 @@ export default function BooksExperience({
   trending,
   serials,
 }: BooksExperienceProps) {
+  const initialBook = continueItems[0] ?? featured;
+  const initialProgress = continueItems[0]?.progress ?? 0;
   const [query, setQuery] = useState("");
   const [category, setCategory] = useState<Category>("All");
   const [savedIds, setSavedIds] = useState(() => new Set(["quiet-bells"]));
-  const [activeBook, setActiveBook] = useState<Book>(continueItems[0]);
+  const [activeBook, setActiveBook] = useState<Book>(initialBook);
   const [playing, setPlaying] = useState(false);
-  const [playerProgress, setPlayerProgress] = useState(continueItems[0].progress);
-  const progressRef = useRef(continueItems[0].progress);
+  const [playerProgress, setPlayerProgress] = useState(initialProgress);
+  const progressRef = useRef(initialProgress);
   const [speed, setSpeed] = useState(1);
-  const [readerCoins, setReaderCoins] = useState(240);
+  const readerCoins = 240;
   const [unlockOpen, setUnlockOpen] = useState(false);
-  const [featuredUnlocked, setFeaturedUnlocked] = useState(false);
+  const [featuredFlowPreviewed, setFeaturedFlowPreviewed] = useState(false);
   const [announcement, setAnnouncement] = useState("");
 
   const allBooks = useMemo(() => {
@@ -774,6 +865,7 @@ export default function BooksExperience({
         book.creator,
         book.category,
         book.cast,
+        book.provenance.label,
         book.description,
       ]
         .join(" ")
@@ -790,6 +882,16 @@ export default function BooksExperience({
     category === "All"
       ? serials
       : serials.filter((book) => book.category === category);
+  const libraryBookIds = useMemo(
+    () => new Set(continueItems.map((book) => book.id)),
+    [continueItems],
+  );
+  const activeIsPreview = !libraryBookIds.has(activeBook.id);
+  const maxPlayerProgress = activeIsPreview
+    ? previewProgressLimit(activeBook)
+    : 100;
+  const featuredCoinPrice = featured.price === "free" ? 0 : featured.price;
+  const featuredShortfall = Math.max(0, featuredCoinPrice - readerCoins);
 
   useEffect(() => {
     progressRef.current = playerProgress;
@@ -819,31 +921,61 @@ export default function BooksExperience({
     const interval = window.setInterval(() => {
       const nextProgress = Math.min(
         progressRef.current + (100 / duration) * speed,
-        100,
+        maxPlayerProgress,
       );
       progressRef.current = nextProgress;
       setPlayerProgress(nextProgress);
 
-      if (nextProgress >= 100) {
+      if (nextProgress >= maxPlayerProgress) {
         setPlaying(false);
-        setAnnouncement(`${activeBook.title} finished.`);
+        setAnnouncement(
+          activeIsPreview
+            ? `Preview ended for ${activeBook.title}. Unlock access is not part of this front-end preview.`
+            : `${activeBook.title} finished.`,
+        );
       }
     }, 1000);
 
     return () => window.clearInterval(interval);
-  }, [activeBook.duration, activeBook.title, playing, speed]);
+  }, [
+    activeBook.duration,
+    activeBook.title,
+    activeIsPreview,
+    maxPlayerProgress,
+    playing,
+    speed,
+  ]);
 
   function handlePlay(book: Book, initialProgress = 0) {
+    const isPreview = !libraryBookIds.has(book.id);
+    const playbackLimit = isPreview ? previewProgressLimit(book) : 100;
+
     if (activeBook.id === book.id) {
+      if (!playing && progressRef.current >= playbackLimit) {
+        progressRef.current = 0;
+        setPlayerProgress(0);
+      }
       setPlaying((current) => !current);
-      setAnnouncement(`${playing ? "Paused" : "Playing"} ${book.title}.`);
+      setAnnouncement(
+        `${playing ? "Paused" : "Playing"} ${
+          isPreview ? "the preview of " : ""
+        }${book.title}.`,
+      );
       return;
     }
 
+    const nextProgress = isPreview
+      ? 0
+      : Math.max(0, Math.min(initialProgress, playbackLimit));
     setActiveBook(book);
-    setPlayerProgress(initialProgress);
+    progressRef.current = nextProgress;
+    setPlayerProgress(nextProgress);
     setPlaying(true);
-    setAnnouncement(`Playing preview of ${book.title}.`);
+    setAnnouncement(
+      isPreview
+        ? `Playing the ${formatClock(book.previewDurationSeconds)} preview of ${book.title}.`
+        : `Resuming ${book.title}.`,
+    );
   }
 
   function handleSave(book: Book) {
@@ -859,29 +991,55 @@ export default function BooksExperience({
     });
   }
 
-  function handleUnlock() {
-    const price = featured.price;
-    if (price === "free" || featuredUnlocked) return;
-    setReaderCoins((current) => current - price);
-    setFeaturedUnlocked(true);
+  function handleUnlockPreview() {
+    if (featuredShortfall > 0) {
+      setAnnouncement(
+        `Unlock unavailable. You need ${featuredShortfall} more Reader Coins.`,
+      );
+      return;
+    }
+
+    setFeaturedFlowPreviewed(true);
     setUnlockOpen(false);
     setAnnouncement(
-      `${featured.title} unlocked and added to your Library. ${
-        readerCoins - price
-      } Reader Coins remain.`,
+      `Interaction preview complete for ${featured.title}. No Reader Coins were charged and no Library entitlement was created.`,
     );
   }
 
   function handlePlayerSeek(seconds: number) {
     const duration = durationToSeconds(activeBook.duration);
     const delta = (seconds / duration) * 100;
-    setPlayerProgress((current) => Math.max(0, Math.min(100, current + delta)));
+    const next = Math.max(
+      0,
+      Math.min(maxPlayerProgress, progressRef.current + delta),
+    );
+    progressRef.current = next;
+    setPlayerProgress(next);
+  }
+
+  function handlePlayerProgress(value: number) {
+    const next = Math.max(0, Math.min(maxPlayerProgress, value));
+    progressRef.current = next;
+    setPlayerProgress(next);
+  }
+
+  function togglePlayback() {
+    if (!playing && progressRef.current >= maxPlayerProgress) {
+      progressRef.current = 0;
+      setPlayerProgress(0);
+    }
+    setPlaying((current) => !current);
+    setAnnouncement(
+      `${playing ? "Paused" : "Playing"} ${
+        activeIsPreview ? "the preview of " : ""
+      }${activeBook.title}.`,
+    );
   }
 
   function cycleSpeed() {
     const speeds = [1, 1.25, 1.5, 2];
     const currentIndex = speeds.indexOf(speed);
-    const next = speeds[(currentIndex + 1) % speeds.length];
+    const next = speeds[(currentIndex + 1) % speeds.length] ?? 1;
     setSpeed(next);
     setAnnouncement(`Playback speed ${next} times.`);
   }
@@ -1017,10 +1175,7 @@ export default function BooksExperience({
                 <span>{featured.duration}</span>
                 <span>Complete book</span>
                 <span>English · GA</span>
-                <span className="provenance-chip">
-                  <Icon name="sparkles" size={13} />
-                  {featured.provenance}
-                </span>
+                <ProvenanceBadge book={featured} compact />
               </div>
               <div className="hero-actions">
                 <button
@@ -1038,25 +1193,37 @@ export default function BooksExperience({
                     ? "Pause preview"
                     : "Listen to preview"}
                 </button>
-                {featuredUnlocked ? (
+                <div className="unlock-action">
                   <button
-                    className="unlock-button is-unlocked"
-                    onClick={() => handlePlay(featured)}
-                    type="button"
-                  >
-                    <Icon name="check" size={18} />
-                    In your Library · Play
-                  </button>
-                ) : (
-                  <button
-                    className="unlock-button"
+                    className={`unlock-button${
+                      featuredFlowPreviewed ? " is-previewed" : ""
+                    }`}
+                    disabled={featuredShortfall > 0}
                     onClick={() => setUnlockOpen(true)}
                     type="button"
                   >
-                    <Icon name="coin" size={18} />
-                    Unlock for {featured.price} Reader Coins
+                    <Icon
+                      name={
+                        featuredFlowPreviewed
+                          ? "check"
+                          : featured.price === "free"
+                            ? "library"
+                            : "coin"
+                      }
+                      size={18}
+                    />
+                    {featuredFlowPreviewed
+                      ? "Interaction previewed · no account changes"
+                      : featured.price === "free"
+                        ? "Preview Add free to Library"
+                        : `Preview unlock for ${featured.price} Reader Coins`}
                   </button>
-                )}
+                  {featuredShortfall > 0 ? (
+                    <span className="unlock-shortfall" role="status">
+                      Need {featuredShortfall} more Reader Coins
+                    </span>
+                  ) : null}
+                </div>
                 <button
                   aria-label={`${savedIds.has(featured.id) ? "Remove" : "Save"} ${
                     featured.title
@@ -1113,17 +1280,24 @@ export default function BooksExperience({
               id="continue-title"
               title="Continue listening"
             />
-            <div className="continue-grid">
-              {continueItems.map((book) => (
-                <ContinueCard
-                  book={book}
-                  isActive={activeBook.id === book.id}
-                  isPlaying={playing}
-                  key={book.id}
-                  onPlay={handlePlay}
-                />
-              ))}
-            </div>
+            {continueItems.length ? (
+              <div className="continue-grid">
+                {continueItems.map((book) => (
+                  <ContinueCard
+                    book={book}
+                    isActive={activeBook.id === book.id}
+                    isPlaying={playing}
+                    key={book.id}
+                    onPlay={handlePlay}
+                  />
+                ))}
+              </div>
+            ) : (
+              <div className="inline-empty">
+                <p>Your listening activity will appear here after you start a title.</p>
+                <a href="#browse">Browse stories</a>
+              </div>
+            )}
           </section>
 
           <section
@@ -1257,13 +1431,13 @@ export default function BooksExperience({
               <p className="section-eyebrow">Always yours to return to</p>
               <h2>Your stories, one place, every device.</h2>
               <p>
-                Keep progress, bookmarks, and protected offline listening together
-                across your AudiLink Books library.
+                Library preview: progress, bookmarks, and protected offline
+                listening will stay together across AudiLink Books.
               </p>
             </div>
             <a className="library-link" href="#continue-listening">
-              View my Library
-              <span>{savedIds.size + 5} titles</span>
+              Review current listens
+              <span>{savedIds.size + 5} titles in this UI preview</span>
               <Icon name="arrow" size={19} />
             </a>
           </section>
@@ -1276,23 +1450,22 @@ export default function BooksExperience({
           <span>AudiLink Books</span>
         </div>
         <p>Stories deserve to be heard.</p>
-        <nav aria-label="Footer navigation">
-          <a href="#discover">About</a>
-          <a href="#discover">Accessibility</a>
-          <a href="#discover">Creator terms</a>
-        </nav>
+        <div aria-label="Planned footer destinations" className="footer-roadmap">
+          <span>About <small>Coming later</small></span>
+          <span>Accessibility <small>Coming later</small></span>
+          <span>Creator terms <small>Coming later</small></span>
+        </div>
       </footer>
 
       <PersistentPlayer
         book={activeBook}
-        onProgress={setPlayerProgress}
+        maxProgress={maxPlayerProgress}
+        onProgress={handlePlayerProgress}
         onSeek={handlePlayerSeek}
         onSpeed={cycleSpeed}
-        onToggle={() => {
-          setPlaying((current) => !current);
-          setAnnouncement(`${playing ? "Paused" : "Playing"} ${activeBook.title}.`);
-        }}
+        onToggle={togglePlayback}
         playing={playing}
+        preview={activeIsPreview}
         progress={playerProgress}
         speed={speed}
       />
@@ -1310,16 +1483,19 @@ export default function BooksExperience({
           <Icon name="library" size={20} />
           <span>Library</span>
         </a>
-        <a href="#new-serials">
+        <button aria-label="Downloads, coming later" disabled type="button">
           <Icon name="download" size={20} />
           <span>Downloads</span>
-        </a>
+          <small>Soon</small>
+        </button>
         <button
-          onClick={() => setAnnouncement("More includes Saved, Following, Creators, Wallet, and Settings.")}
+          aria-label="More destinations, coming later"
+          disabled
           type="button"
         >
           <Icon name="more" size={20} />
           <span>More</span>
+          <small>Soon</small>
         </button>
       </nav>
 
@@ -1327,7 +1503,7 @@ export default function BooksExperience({
         balance={readerCoins}
         book={featured}
         onClose={() => setUnlockOpen(false)}
-        onConfirm={handleUnlock}
+        onConfirm={handleUnlockPreview}
         open={unlockOpen}
       />
 

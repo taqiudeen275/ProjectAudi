@@ -9,6 +9,8 @@
       "name": "audilink",
       "version": "0.1.0",
       "dependencies": {
+        "@audilink/contracts": "workspace:*",
+        "@audilink/ui": "workspace:*",
         "next": "16.2.12",
         "react": "19.2.4",
         "react-dom": "19.2.4",
@@ -47,6 +49,8 @@
       "name": "audilink-books",
       "version": "0.1.0",
       "dependencies": {
+        "@audilink/contracts": "workspace:*",
+        "@audilink/ui": "workspace:*",
         "next": "16.2.12",
         "react": "19.2.4",
         "react-dom": "19.2.4",
@@ -80,6 +84,7 @@
       "name": "@audilink/control-api",
       "version": "0.1.0",
       "dependencies": {
+        "@audilink/contracts": "workspace:*",
         "@fastify/swagger": "9.8.1",
         "@fastify/swagger-ui": "6.1.0",
         "@sinclair/typebox": "0.34.52",

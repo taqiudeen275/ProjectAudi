@@ -105,4 +105,3 @@ export interface AssetVariant {
   readonly metadata: AssetMediaMetadata;
   readonly createdAt: IsoTimestamp;
 }
-

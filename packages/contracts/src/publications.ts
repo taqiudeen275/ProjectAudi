@@ -100,4 +100,3 @@ export interface PublicationRelease {
   readonly publishedAt: IsoTimestamp | null;
   readonly createdAt: IsoTimestamp;
 }
-

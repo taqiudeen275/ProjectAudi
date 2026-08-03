@@ -1,5 +1,7 @@
 "use client";
 
+import type { ProjectKind } from "@audilink/contracts";
+import { productSurfaces } from "@audilink/ui";
 import {
   type FormEvent,
   type KeyboardEvent as ReactKeyboardEvent,
@@ -58,14 +60,18 @@ export type CreateAction = {
   tone: "story" | "cyan" | "violet" | "amber" | "blue";
 };
 
+const contractProjectKindLabels = {
+  audiobook: "Audiobook",
+  serial: "Serial",
+  textToSpeech: "Speech",
+  soundDesign: "Sound Effect",
+} as const satisfies Record<ProjectKind, string>;
+
 export type StudioProject = {
   id: string;
   title: string;
   kind:
-    | "Audiobook"
-    | "Serial"
-    | "Speech"
-    | "Sound Effect"
+    | (typeof contractProjectKindLabels)[ProjectKind]
     | "Transcription"
     | "Voice";
   detail: string;
@@ -89,17 +95,14 @@ export type StudioJob = {
 };
 
 type StudioDashboardProps = {
-  createActions: CreateAction[];
+  createActions: [CreateAction, ...CreateAction[]];
   projects: StudioProject[];
   jobs: StudioJob[];
 };
 
 const filters = [
   "All",
-  "Audiobook",
-  "Serial",
-  "Speech",
-  "Sound Effect",
+  ...Object.values(contractProjectKindLabels),
   "Transcription",
   "Voice",
 ] as const;
@@ -321,8 +324,10 @@ function Icon({
 }
 
 function Brand() {
+  const [productName, surfaceName] = productSurfaces.studio.name.split(" ", 2);
+
   return (
-    <div className="brand-lockup" aria-label="AudiLink Studio">
+    <div className="brand-lockup" aria-label={productSurfaces.studio.name}>
       <span className="brand-signal" aria-hidden="true">
         <i />
         <i />
@@ -331,7 +336,7 @@ function Brand() {
         <i />
       </span>
       <span className="brand-name">
-        AudiLink <small>Studio</small>
+        {productName} <small>{surfaceName}</small>
       </span>
     </div>
   );
@@ -696,17 +701,18 @@ export default function StudioDashboard({
         return;
       }
 
-      if (event.key !== "Tab" || !dialogRef.current) return;
+      const dialog = dialogRef.current;
+      if (event.key !== "Tab" || !dialog) return;
 
       const focusable = Array.from(
-        dialogRef.current.querySelectorAll<HTMLElement>(
+        dialog.querySelectorAll<HTMLElement>(
           'button:not([disabled]), input:not([disabled]), select:not([disabled]), [href], [tabindex]:not([tabindex="-1"])',
         ),
       );
 
-      if (focusable.length === 0) return;
       const first = focusable[0];
-      const last = focusable[focusable.length - 1];
+      const last = focusable.at(-1);
+      if (!first || !last) return;
 
       if (event.shiftKey && document.activeElement === first) {
         event.preventDefault();
@@ -738,10 +744,11 @@ export default function StudioDashboard({
         return;
       }
 
-      if (event.key !== "Tab" || !mobileDrawerRef.current) return;
+      const drawer = mobileDrawerRef.current;
+      if (event.key !== "Tab" || !drawer) return;
 
       const focusable = Array.from(
-        mobileDrawerRef.current.querySelectorAll<HTMLElement>(
+        drawer.querySelectorAll<HTMLElement>(
           'button:not([disabled]), input:not([disabled]), select:not([disabled]), [href], [tabindex]:not([tabindex="-1"])',
         ),
       );
@@ -752,10 +759,11 @@ export default function StudioDashboard({
       }
 
       const first = focusable[0];
-      const last = focusable[focusable.length - 1];
+      const last = focusable.at(-1);
+      if (!first || !last) return;
       const activeElement = document.activeElement;
 
-      if (!mobileDrawerRef.current.contains(activeElement)) {
+      if (!drawer.contains(activeElement)) {
         event.preventDefault();
         (event.shiftKey ? last : first).focus();
       } else if (event.shiftKey && activeElement === first) {
@@ -895,6 +903,10 @@ export default function StudioDashboard({
           </header>
 
           <main className="dashboard" id="main-content" tabIndex={-1}>
+            <p className="foundation-preview">
+              <Icon name="spark" size={13} aria-hidden="true" />
+              Foundation preview <span aria-hidden="true">·</span> local scenario data
+            </p>
             <section className="hero-panel" aria-labelledby="studio-heading">
               <div className="hero-copy">
                 <p className="eyebrow">

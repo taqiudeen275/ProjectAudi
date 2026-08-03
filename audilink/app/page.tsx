@@ -4,7 +4,7 @@ import StudioDashboard, {
   type StudioProject,
 } from "./studio-dashboard";
 
-const createActions: CreateAction[] = [
+const createActions: [CreateAction, ...CreateAction[]] = [
   {
     id: "audiobook",
     label: "Audiobook",

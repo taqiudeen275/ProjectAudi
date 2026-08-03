@@ -510,12 +510,13 @@ dialog:focus-visible {
   width: 3px;
 }
 
-.hero-meta .provenance-chip {
+.hero-meta .provenance-label {
   align-items: center;
   background: rgba(255, 247, 236, 0.07);
   border: 1px solid var(--line);
   display: inline-flex;
   gap: 6px;
+  margin: 0;
   padding: 7px 9px;
 }
 
@@ -525,6 +526,19 @@ dialog:focus-visible {
   flex-wrap: wrap;
   gap: 10px;
   margin-top: 31px;
+}
+
+.unlock-action {
+  align-items: stretch;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.unlock-shortfall {
+  color: var(--coral);
+  font-size: 10px;
+  font-weight: 700;
 }
 
 .hero-play-button,
@@ -554,8 +568,13 @@ dialog:focus-visible {
 }
 
 .hero-play-button:hover,
-.primary-button:hover {
+.primary-button:hover:not(:disabled) {
   background: var(--amber-light);
+}
+
+button:disabled {
+  cursor: not-allowed;
+  opacity: 0.48;
 }
 
 .hero-play-icon {
@@ -583,6 +602,12 @@ dialog:focus-visible {
 .unlock-button.is-unlocked {
   background: rgba(166, 200, 174, 0.12);
   border-color: rgba(166, 200, 174, 0.45);
+  color: #c9e5d0;
+}
+
+.unlock-button.is-previewed {
+  background: rgba(166, 200, 174, 0.1);
+  border-color: rgba(166, 200, 174, 0.38);
   color: #c9e5d0;
 }
 
@@ -1220,6 +1245,14 @@ dialog:focus-visible {
   margin: 9px 0 0;
 }
 
+.provenance-label[data-narration="human"] {
+  color: #aebdab;
+}
+
+.provenance-label-compact {
+  font-size: 8px;
+}
+
 .serial-grid {
   display: grid;
   gap: 15px;
@@ -1329,11 +1362,14 @@ dialog:focus-visible {
   margin: 0;
 }
 
-.inline-empty button {
+.inline-empty button,
+.inline-empty a {
+  align-items: center;
   background: transparent;
   border: 0;
   color: var(--amber-light);
   cursor: pointer;
+  display: inline-flex;
   font-weight: 700;
   min-height: 44px;
 }
@@ -1482,19 +1518,22 @@ dialog:focus-visible {
   width: 25px;
 }
 
-.books-footer nav {
-  display: flex;
-  gap: 22px;
+.books-footer .footer-roadmap {
+  color: var(--text-muted);
+  gap: 18px;
+  text-align: right;
 }
 
-.books-footer a {
-  align-items: center;
-  display: inline-flex;
-  min-height: 44px;
+.footer-roadmap span {
+  display: grid;
+  gap: 3px;
 }
 
-.books-footer a:hover {
-  color: var(--text);
+.footer-roadmap small {
+  color: var(--amber-light);
+  font-size: 7px;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
 }
 
 /* Dialog */
@@ -1545,6 +1584,27 @@ dialog:focus-visible {
 
 .dialog-content h2 {
   font-size: 35px;
+}
+
+.interaction-preview-notice {
+  background: rgba(166, 200, 174, 0.08);
+  border: 1px solid rgba(166, 200, 174, 0.3);
+  display: grid;
+  gap: 3px;
+  margin-bottom: 18px;
+  padding: 11px 13px;
+}
+
+.interaction-preview-notice strong {
+  color: #c9e5d0;
+  font-size: 10px;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+.interaction-preview-notice span {
+  color: var(--text-soft);
+  font-size: 9px;
 }
 
 .dialog-description {
@@ -1612,6 +1672,14 @@ dialog:focus-visible {
   border-bottom: 0;
   color: var(--amber-light);
   font-size: 12px;
+}
+
+.coin-breakdown .coin-shortfall {
+  color: var(--coral);
+}
+
+.coin-shortfall dt {
+  color: inherit;
 }
 
 .coin-result dt {
@@ -1706,9 +1774,17 @@ dialog:focus-visible {
   white-space: nowrap;
 }
 
-.player-title-wrap > span:last-child {
+.player-unit {
   color: var(--text-muted);
   font-size: 9px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.player-title-wrap .provenance-label {
+  margin: 0;
+  max-width: 180px;
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
@@ -1746,6 +1822,11 @@ dialog:focus-visible {
 .speed-button:hover {
   background: rgba(255, 247, 236, 0.08);
   color: var(--text);
+}
+
+.player-icon:disabled {
+  background: transparent;
+  color: var(--text-muted);
 }
 
 .player-play {
@@ -2024,7 +2105,7 @@ dialog:focus-visible {
 @media (max-width: 767px) {
   :root {
     --header-height: 120px;
-    --player-height: 82px;
+    --player-height: 88px;
     --mobile-nav-height: calc(66px + env(safe-area-inset-bottom));
   }
 
@@ -2144,6 +2225,11 @@ dialog:focus-visible {
 
   .hero-play-button,
   .unlock-button {
+    grid-column: 1 / -1;
+    width: 100%;
+  }
+
+  .unlock-action {
     grid-column: 1 / -1;
     width: 100%;
   }
@@ -2274,7 +2360,7 @@ dialog:focus-visible {
   }
 
   .player-status,
-  .player-title-wrap > span:last-child {
+  .player-unit {
     display: none;
   }
 
@@ -2288,6 +2374,16 @@ dialog:focus-visible {
 
   .player-controls > .player-icon {
     display: none;
+  }
+
+  .player-controls > .player-seek-button {
+    display: inline-flex;
+    height: 44px;
+    width: 36px;
+  }
+
+  .player-controls {
+    gap: 1px;
   }
 
   .player-play {
@@ -2357,6 +2453,21 @@ dialog:focus-visible {
 
   .mobile-nav a[aria-current="page"] {
     color: var(--amber-light);
+  }
+
+  .mobile-nav button:disabled {
+    color: #746b63;
+    cursor: not-allowed;
+    opacity: 1;
+  }
+
+  .mobile-nav button small {
+    color: var(--amber);
+    font-size: 6px;
+    letter-spacing: 0.08em;
+    line-height: 1;
+    margin-top: -2px;
+    text-transform: uppercase;
   }
 
   .dialog-content {
