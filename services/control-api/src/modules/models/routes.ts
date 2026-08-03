@@ -1,6 +1,11 @@
 import type { FastifyPluginAsync } from "fastify";
 import { Type } from "@sinclair/typebox";
 
+const LanguageTagSchema = Type.String({
+  pattern: "^[a-z]{2,3}(?:-[A-Za-z0-9]{2,8})*$",
+  description: "BCP-47 language tag or benchmark candidate tag",
+});
+
 const ModelRouteSchema = Type.Object({
   id: Type.String(),
   label: Type.String(),
@@ -11,7 +16,7 @@ const ModelRouteSchema = Type.Object({
     Type.Literal("studio"),
   ]),
   capabilities: Type.Array(Type.String()),
-  languages: Type.Array(Type.String()),
+  languages: Type.Array(LanguageTagSchema),
   approval: Type.Union([
     Type.Literal("approved"),
     Type.Literal("evaluation"),

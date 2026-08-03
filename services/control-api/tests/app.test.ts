@@ -27,6 +27,37 @@ test("health and OpenAPI are available", async (t) => {
   assert.equal(contract.json().info.title, "AudiLink Control API");
 });
 
+test("local fixture routes are absent by default and require their fixture token", async (t) => {
+  const productionShape = await buildApp();
+  t.after(() => productionShape.close());
+
+  const absent = await productionShape.inject({
+    method: "GET",
+    url: "/v1/fixtures/wallets/studio",
+  });
+  assert.equal(absent.statusCode, 404);
+
+  const fixtureShape = await buildApp({ enableLocalFixtures: true, fixtureToken });
+  t.after(() => fixtureShape.close());
+
+  const missingToken = await fixtureShape.inject({
+    method: "GET",
+    url: "/v1/fixtures/wallets/studio",
+    headers: { "x-audilink-workspace-id": "workspace_test_0001" },
+  });
+  assert.equal(missingToken.statusCode, 401);
+
+  const badToken = await fixtureShape.inject({
+    method: "GET",
+    url: "/v1/fixtures/wallets/studio",
+    headers: {
+      "x-audilink-fixture-token": "incorrect-token",
+      "x-audilink-workspace-id": "workspace_test_0001",
+    },
+  });
+  assert.equal(badToken.statusCode, 401);
+});
+
 test("job creation requires and honors idempotency keys", async (t) => {
   const app = await buildApp({ enableLocalFixtures: true, fixtureToken });
   t.after(() => app.close());

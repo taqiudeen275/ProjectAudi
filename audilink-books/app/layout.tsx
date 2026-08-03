@@ -1,9 +1,10 @@
 import type { Metadata, Viewport } from "next";
+import { productSurfaces } from "@audilink/ui";
 
 import "./globals.css";
 
 export const metadata: Metadata = {
-  applicationName: "AudiLink Books",
+  applicationName: productSurfaces.books.name,
   title: {
     default: "AudiLink Books — Stories deserve to be heard",
     template: "%s · AudiLink Books",

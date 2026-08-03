@@ -10,7 +10,7 @@
 
 This document turns the product, UX, architecture, model, commerce, and safety specifications into an ordered delivery program with objective exit criteria. It does not authorize shortcuts around licensing, ledger integrity, consent, security, or accessibility to meet a date.
 
-The current repository contains two clean Next.js scaffolds and no production data, backend, or migrations. The project is therefore greenfield, but must preserve the intentional Studio/Books separation.
+The repository now contains the first M1 foundation slice: separate Studio, Books, and Admin surfaces, shared contracts/tokens, and a schema-first control API with protected in-memory development fixtures. Production authentication, persistence, ledgers, workflows, media workers, and migrations are not implemented yet, so the remaining M1 exit criteria still apply.
 
 ## 2. Source-of-truth documents
 

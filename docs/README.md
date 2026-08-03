@@ -1,6 +1,6 @@
 # AudiLink Product and Engineering Documentation
 
-- **Status:** Pre-build baseline
+- **Status:** Approved product baseline; M1 implementation in progress
 - **Product names:** AudiLink Studio, AudiLink Books, AudiLink Admin
 - **Audience:** Product, design, engineering, AI/ML, operations, trust and safety, finance, and launch partners
 
@@ -13,6 +13,8 @@ This directory is the decision baseline for AudiLink V1. AudiLink is one platfor
 - **AudiLink Admin** is the staff-only operating console for users, moderation, commerce, balances, referrals, models, jobs, payouts, feature controls, and audit.
 
 Studio and Books are separate public applications that launch together. They share identity and platform services but have different navigation, balances, permissions, and user goals. Admin is never a public product mode.
+
+The repository currently implements the first foundation slice: the three responsive product shells, shared TypeScript contracts/tokens, and a schema-first control API with opt-in local fixtures. The roadmap remains authoritative for the production capabilities and launch gates that are not yet implemented.
 
 ## Document pack
 

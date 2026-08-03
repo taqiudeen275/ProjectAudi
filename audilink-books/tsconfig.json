@@ -19,7 +19,9 @@
       }
     ],
     "paths": {
-      "@/*": ["./*"]
+      "@/*": ["./*"],
+      "@audilink/contracts": ["../packages/contracts/src/index.ts"],
+      "@audilink/ui": ["../packages/ui/src/index.ts"]
     }
   },
   "include": [

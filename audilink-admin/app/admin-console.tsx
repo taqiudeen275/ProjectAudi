@@ -369,7 +369,7 @@ export function AdminConsole() {
               </div>
               <div className="filter-row" role="group" aria-label="Filter decision queue">
                 {(["all", "urgent", "trust", "models", "finance"] as const).map((filter) => (
-                  <button key={filter} className={queueFilter === filter ? "filter active" : "filter"} type="button" onClick={() => setQueueFilter(filter)}>
+                  <button key={filter} className={queueFilter === filter ? "filter active" : "filter"} type="button" aria-pressed={queueFilter === filter} onClick={() => setQueueFilter(filter)}>
                     {filter === "trust" ? "Trust & safety" : filter}
                   </button>
                 ))}
