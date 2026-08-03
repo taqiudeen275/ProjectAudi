@@ -108,7 +108,7 @@ type ProjectFilter = (typeof filters)[number];
 
 const navGroups: Array<{
   label: string;
-  items: Array<{ label: string; href: string; icon: IconName; active?: boolean }>;
+  items: Array<{ label: string; href?: string; icon: IconName; active?: boolean }>;
 }> = [
   {
     label: "Work",
@@ -121,9 +121,9 @@ const navGroups: Array<{
   {
     label: "Library & publish",
     items: [
-      { label: "Assets", href: "#assets", icon: "library" },
-      { label: "Marketplace", href: "#marketplace", icon: "market" },
-      { label: "Publish & releases", href: "#publish", icon: "publish" },
+      { label: "Assets", icon: "library" },
+      { label: "Marketplace", icon: "market" },
+      { label: "Publish & releases", icon: "publish" },
     ],
   },
   {
@@ -131,7 +131,7 @@ const navGroups: Array<{
     items: [
       { label: "Activity", href: "#activity", icon: "activity" },
       { label: "Usage & plan", href: "#credits", icon: "credits" },
-      { label: "Earnings", href: "#earnings", icon: "earnings" },
+      { label: "Earnings", icon: "earnings" },
     ],
   },
 ];
@@ -343,25 +343,45 @@ function Navigation({ onNavigate }: { onNavigate?: () => void }) {
       {navGroups.map((group) => (
         <div className="nav-group" key={group.label}>
           <p className="nav-group-label">{group.label}</p>
-          {group.items.map((item) => (
-            <a
-              className={`nav-item${item.active ? " is-active" : ""}`}
-              href={item.href}
-              key={item.label}
-              onClick={onNavigate}
-              aria-current={item.active ? "page" : undefined}
-            >
-              <span className="nav-icon">
-                <Icon name={item.icon} size={19} />
-              </span>
-              <span>{item.label}</span>
-              {item.label === "Activity" ? (
-                <span className="nav-count" aria-label="2 active jobs">
-                  2
+          {group.items.map((item) => {
+            const content = (
+              <>
+                <span className="nav-icon">
+                  <Icon name={item.icon} size={19} />
                 </span>
-              ) : null}
-            </a>
-          ))}
+                <span>{item.label}</span>
+                {item.label === "Activity" ? (
+                  <span className="nav-count" aria-label="2 active jobs">
+                    2
+                  </span>
+                ) : null}
+                {!item.href ? <span className="nav-availability">Later</span> : null}
+              </>
+            );
+
+            return item.href ? (
+              <a
+                className={`nav-item${item.active ? " is-active" : ""}`}
+                href={item.href}
+                key={item.label}
+                onClick={onNavigate}
+                aria-current={item.active ? "page" : undefined}
+              >
+                {content}
+              </a>
+            ) : (
+              <button
+                aria-label={`${item.label}, coming later`}
+                className="nav-item is-coming-later"
+                disabled
+                key={item.label}
+                title="Coming later"
+                type="button"
+              >
+                {content}
+              </button>
+            );
+          })}
         </div>
       ))}
     </nav>
@@ -376,18 +396,32 @@ function Sidebar() {
       </div>
       <Navigation />
       <div className="sidebar-bottom">
-        <a className="nav-item" href="#settings">
+        <button
+          aria-label="Workspace settings, coming later"
+          className="nav-item is-coming-later"
+          disabled
+          title="Coming later"
+          type="button"
+        >
           <span className="nav-icon">
             <Icon name="settings" size={19} />
           </span>
           <span>Workspace</span>
-        </a>
-        <a className="nav-item" href="#help">
+          <span className="nav-availability">Later</span>
+        </button>
+        <button
+          aria-label="Help and shortcuts, coming later"
+          className="nav-item is-coming-later"
+          disabled
+          title="Coming later"
+          type="button"
+        >
           <span className="nav-icon">
             <Icon name="help" size={19} />
           </span>
           <span>Help & shortcuts</span>
-        </a>
+          <span className="nav-availability">Later</span>
+        </button>
         <button className="profile-card" type="button">
           <span className="profile-avatar" aria-hidden="true">
             AT
@@ -480,7 +514,14 @@ function ProjectCard({
           </span>
         </div>
         {project.progress < 100 ? (
-          <div className="project-progress" aria-label={`${project.progress}% complete`}>
+          <div
+            aria-label={`${project.title} progress`}
+            aria-valuemax={100}
+            aria-valuemin={0}
+            aria-valuenow={project.progress}
+            className="project-progress"
+            role="progressbar"
+          >
             <span style={{ width: `${project.progress}%` }} />
           </div>
         ) : null}
@@ -548,7 +589,14 @@ function JobCard({
       </div>
       <h3>{job.title}</h3>
       <p>{job.project}</p>
-      <div className={`job-progress${isActive ? " is-active" : ""}`}>
+      <div
+        aria-label={`${job.title} progress`}
+        aria-valuemax={100}
+        aria-valuemin={0}
+        aria-valuenow={job.progress}
+        className={`job-progress${isActive ? " is-active" : ""}`}
+        role="progressbar"
+      >
         <span style={{ width: `${cancelling ? job.progress : Math.max(job.progress, 6)}%` }} />
       </div>
       <div className="job-detail">
@@ -597,7 +645,9 @@ export default function StudioDashboard({
   const dialogRef = useRef<HTMLDivElement>(null);
   const dialogCloseRef = useRef<HTMLButtonElement>(null);
   const previousFocusRef = useRef<HTMLElement | null>(null);
-  const menuButtonRef = useRef<HTMLButtonElement>(null);
+  const mobileDrawerRef = useRef<HTMLElement>(null);
+  const mobileDrawerCloseRef = useRef<HTMLButtonElement>(null);
+  const mobileNavPreviousFocusRef = useRef<HTMLElement | null>(null);
 
   const selectedAction =
     createActions.find((action) => action.id === selectedCreate) ?? createActions[0];
@@ -628,15 +678,11 @@ export default function StudioDashboard({
         searchRef.current?.focus();
       }
 
-      if (event.key === "Escape" && mobileNavOpen) {
-        setMobileNavOpen(false);
-        menuButtonRef.current?.focus();
-      }
     };
 
     window.addEventListener("keydown", handleShortcut);
     return () => window.removeEventListener("keydown", handleShortcut);
-  }, [createOpen, mobileNavOpen]);
+  }, [createOpen]);
 
   useEffect(() => {
     if (!createOpen) return;
@@ -681,8 +727,52 @@ export default function StudioDashboard({
 
   useEffect(() => {
     if (!mobileNavOpen) return;
+
     document.body.classList.add("has-overlay");
-    return () => document.body.classList.remove("has-overlay");
+    mobileDrawerCloseRef.current?.focus();
+
+    const handleDrawerKey = (event: globalThis.KeyboardEvent) => {
+      if (event.key === "Escape") {
+        event.preventDefault();
+        setMobileNavOpen(false);
+        return;
+      }
+
+      if (event.key !== "Tab" || !mobileDrawerRef.current) return;
+
+      const focusable = Array.from(
+        mobileDrawerRef.current.querySelectorAll<HTMLElement>(
+          'button:not([disabled]), input:not([disabled]), select:not([disabled]), [href], [tabindex]:not([tabindex="-1"])',
+        ),
+      );
+
+      if (focusable.length === 0) {
+        event.preventDefault();
+        return;
+      }
+
+      const first = focusable[0];
+      const last = focusable[focusable.length - 1];
+      const activeElement = document.activeElement;
+
+      if (!mobileDrawerRef.current.contains(activeElement)) {
+        event.preventDefault();
+        (event.shiftKey ? last : first).focus();
+      } else if (event.shiftKey && activeElement === first) {
+        event.preventDefault();
+        last.focus();
+      } else if (!event.shiftKey && activeElement === last) {
+        event.preventDefault();
+        first.focus();
+      }
+    };
+
+    window.addEventListener("keydown", handleDrawerKey);
+    return () => {
+      window.removeEventListener("keydown", handleDrawerKey);
+      document.body.classList.remove("has-overlay");
+      mobileNavPreviousFocusRef.current?.focus();
+    };
   }, [mobileNavOpen]);
 
   useEffect(() => {
@@ -698,6 +788,11 @@ export default function StudioDashboard({
     setStartMethod("blank");
     setMobileNavOpen(false);
     setCreateOpen(true);
+  };
+
+  const openMobileNavigation = () => {
+    mobileNavPreviousFocusRef.current = document.activeElement as HTMLElement | null;
+    setMobileNavOpen(true);
   };
 
   const closeCreate = () => setCreateOpen(false);
@@ -722,17 +817,20 @@ export default function StudioDashboard({
         id="top"
         inert={mobileNavOpen || createOpen ? true : undefined}
       >
+        <a className="skip-link" href="#main-content">
+          Skip to Studio workspace
+        </a>
         <Sidebar />
 
         <div className="workspace-shell">
           <header className="mobile-header">
             <button
-              ref={menuButtonRef}
               className="icon-button"
               type="button"
-              onClick={() => setMobileNavOpen(true)}
+              onClick={openMobileNavigation}
               aria-label="Open Studio navigation"
               aria-expanded={mobileNavOpen}
+              aria-controls="mobile-navigation-dialog"
             >
               <Icon name="menu" size={22} />
             </button>
@@ -796,7 +894,7 @@ export default function StudioDashboard({
             </div>
           </header>
 
-          <main className="dashboard">
+          <main className="dashboard" id="main-content" tabIndex={-1}>
             <section className="hero-panel" aria-labelledby="studio-heading">
               <div className="hero-copy">
                 <p className="eyebrow">
@@ -979,7 +1077,9 @@ export default function StudioDashboard({
                       <p className="section-kicker">Activity</p>
                       <h2 id="jobs-heading">Jobs</h2>
                     </div>
-                    <a href="#activity-log">View all</a>
+                    <button className="rail-link" disabled title="Coming later" type="button">
+                      View all <span>Later</span>
+                    </button>
                   </div>
                   <div className="jobs-list">
                     {jobs.map((job) => (
@@ -1004,7 +1104,9 @@ export default function StudioDashboard({
                 <section className="rail-panel credits-panel" id="credits" aria-labelledby="credits-heading">
                   <div className="credits-topline">
                     <span className="plan-badge">Free plan</span>
-                    <a href="#usage">Usage</a>
+                    <button className="rail-link" disabled title="Coming later" type="button">
+                      Usage <span>Later</span>
+                    </button>
                   </div>
                   <div className="credits-main">
                     <div
@@ -1084,11 +1186,21 @@ export default function StudioDashboard({
             </span>
             <small>Create</small>
           </button>
-          <a href="#assets">
+          <button
+            aria-label="Assets, coming later"
+            disabled
+            title="Coming later"
+            type="button"
+          >
             <Icon name="library" size={20} />
             <span>Assets</span>
-          </a>
-          <button type="button" onClick={() => setMobileNavOpen(true)}>
+          </button>
+          <button
+            aria-controls="mobile-navigation-dialog"
+            aria-expanded={mobileNavOpen}
+            type="button"
+            onClick={openMobileNavigation}
+          >
             <Icon name="menu" size={20} />
             <span>More</span>
           </button>
@@ -1104,16 +1216,24 @@ export default function StudioDashboard({
             aria-label="Close Studio navigation"
             tabIndex={-1}
           />
-          <aside className="mobile-drawer" aria-label="Studio menu">
+          <aside
+            aria-labelledby="mobile-navigation-title"
+            aria-modal="true"
+            className="mobile-drawer"
+            id="mobile-navigation-dialog"
+            ref={mobileDrawerRef}
+            role="dialog"
+          >
+            <h2 className="sr-only" id="mobile-navigation-title">
+              Studio navigation
+            </h2>
             <div className="drawer-heading">
               <Brand />
               <button
+                ref={mobileDrawerCloseRef}
                 className="icon-button"
                 type="button"
-                onClick={() => {
-                  setMobileNavOpen(false);
-                  menuButtonRef.current?.focus();
-                }}
+                onClick={() => setMobileNavOpen(false)}
                 aria-label="Close Studio navigation"
                 autoFocus
               >

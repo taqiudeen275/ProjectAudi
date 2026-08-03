@@ -9,7 +9,7 @@
   --text: #eef4f1;
   --text-soft: #c2cdca;
   --muted: #79868a;
-  --muted-2: #566267;
+  --muted-2: #748287;
   --signal: #5ee7d5;
   --signal-bright: #8ef6e8;
   --positive: #9ff55b;
@@ -47,6 +47,10 @@ select {
 
 button {
   color: inherit;
+}
+
+button:disabled {
+  cursor: not-allowed;
 }
 
 button,
@@ -126,7 +130,7 @@ a:focus-visible {
 .brand-lockup small {
   color: var(--signal);
   font-family: ui-monospace, "SFMono-Regular", Consolas, monospace;
-  font-size: 8px;
+  font-size: 9px;
   font-weight: 800;
   letter-spacing: 0.19em;
 }
@@ -171,7 +175,7 @@ a:focus-visible {
   border-radius: 7px;
   color: var(--muted);
   font-family: ui-monospace, "SFMono-Regular", Consolas, monospace;
-  font-size: 9px;
+  font-size: 10px;
   letter-spacing: 0.06em;
   text-transform: uppercase;
 }
@@ -193,7 +197,7 @@ a:focus-visible {
 .primary-nav > p {
   margin: 0 10px 8px;
   color: var(--muted-2);
-  font-size: 9px;
+  font-size: 10px;
   font-weight: 800;
   letter-spacing: 0.15em;
 }
@@ -254,9 +258,19 @@ a:focus-visible {
   border: 1px solid var(--line);
   border-radius: 20px;
   color: var(--muted);
-  font-size: 9px;
+  font-size: 10px;
   font-style: normal;
   text-align: center;
+}
+
+.nav-item:disabled {
+  opacity: 0.62;
+}
+
+.nav-item:disabled:hover {
+  background: transparent;
+  color: #879397;
+  transform: none;
 }
 
 .sidebar-spacer {
@@ -308,7 +322,7 @@ a:focus-visible {
 .profile-button small {
   overflow: hidden;
   color: var(--muted);
-  font-size: 9px;
+  font-size: 10px;
   text-overflow: ellipsis;
   white-space: nowrap;
 }
@@ -331,6 +345,10 @@ a:focus-visible {
   background: transparent;
   text-align: left;
   cursor: pointer;
+}
+
+.profile-button:disabled {
+  opacity: 0.74;
 }
 
 .avatar {
@@ -472,7 +490,7 @@ a:focus-visible {
   gap: 8px;
   color: var(--muted);
   font-family: ui-monospace, "SFMono-Regular", Consolas, monospace;
-  font-size: 8px;
+  font-size: 9px;
   font-weight: 750;
   letter-spacing: 0.15em;
 }
@@ -506,9 +524,9 @@ a:focus-visible {
   gap: 5px;
 }
 
-.role-picker > span {
+.role-picker > label {
   color: var(--muted);
-  font-size: 9px;
+  font-size: 10px;
   font-weight: 700;
   letter-spacing: 0.05em;
   text-transform: uppercase;
@@ -527,7 +545,7 @@ a:focus-visible {
 
 .role-picker small {
   color: var(--muted-2);
-  font-size: 9px;
+  font-size: 10px;
 }
 
 .system-strip {
@@ -558,7 +576,7 @@ a:focus-visible {
 
 .system-status small {
   color: var(--muted-2);
-  font-size: 9px;
+  font-size: 10px;
 }
 
 .live-orbit {
@@ -606,7 +624,7 @@ a:focus-visible {
   align-items: center;
   gap: 6px;
   color: var(--muted);
-  font-size: 9px;
+  font-size: 10px;
   white-space: nowrap;
 }
 
@@ -631,9 +649,16 @@ a:focus-visible {
   border: 0;
   background: transparent;
   color: var(--signal);
-  font-size: 9px;
+  font-size: 10px;
   font-weight: 700;
   cursor: pointer;
+}
+
+.system-facts button:disabled,
+.text-button:disabled,
+.search-button:disabled,
+.icon-button:disabled {
+  opacity: 0.58;
 }
 
 .system-facts button .icon,
@@ -687,7 +712,7 @@ a:focus-visible {
   align-items: center;
   justify-content: space-between;
   color: var(--muted);
-  font-size: 9px;
+  font-size: 10px;
   font-weight: 650;
   letter-spacing: 0.02em;
 }
@@ -718,7 +743,7 @@ a:focus-visible {
   gap: 8px;
   margin-top: 9px;
   color: var(--muted-2);
-  font-size: 8px;
+  font-size: 10px;
 }
 
 .metric-trend {
@@ -807,7 +832,7 @@ a:focus-visible {
   border-radius: 5px;
   background: transparent;
   color: var(--muted);
-  font-size: 8px;
+  font-size: 10px;
   font-weight: 700;
   text-transform: capitalize;
   white-space: nowrap;
@@ -846,6 +871,9 @@ a:focus-visible {
 
 .queue-row:last-child { border-bottom: 0; }
 .queue-row:hover { background: rgba(255, 255, 255, 0.018); }
+.queue-row:disabled { cursor: default; }
+.queue-row:disabled:hover { background: transparent; }
+.queue-row:disabled:hover .row-arrow { color: var(--muted-2); transform: none; }
 .queue-row:hover .row-arrow { color: var(--signal); transform: translateX(2px); }
 
 .priority-mark {
@@ -878,7 +906,7 @@ a:focus-visible {
 .queue-main em {
   overflow: hidden;
   color: var(--muted);
-  font-size: 8px;
+  font-size: 10px;
   font-style: normal;
   text-overflow: ellipsis;
   white-space: nowrap;
@@ -900,7 +928,7 @@ a:focus-visible {
   align-items: center;
   gap: 4px;
   color: var(--muted-2);
-  font-size: 8px;
+  font-size: 10px;
 }
 
 .queue-meta > small .icon { width: 10px; }
@@ -909,7 +937,7 @@ a:focus-visible {
   grid-column: 1 / 3;
   color: #465157;
   font-family: ui-monospace, "SFMono-Regular", Consolas, monospace;
-  font-size: 8px;
+  font-size: 9px;
   font-weight: 500;
   letter-spacing: 0.04em;
 }
@@ -921,7 +949,7 @@ a:focus-visible {
   padding: 3px 6px;
   border: 1px solid currentColor;
   border-radius: 20px;
-  font-size: 7px;
+  font-size: 9px;
   font-weight: 750;
   letter-spacing: 0.04em;
   opacity: 0.82;
@@ -955,7 +983,7 @@ a:focus-visible {
 
 .empty-state .icon { width: 24px; height: 24px; color: var(--positive); }
 .empty-state strong { color: var(--text-soft); font-size: 11px; }
-.empty-state span { color: var(--muted-2); font-size: 9px; }
+.empty-state span { color: var(--muted-2); font-size: 10px; }
 
 .capacity-dial {
   display: flex;
@@ -998,7 +1026,7 @@ a:focus-visible {
   font-weight: 550;
 }
 
-.dial small { color: var(--muted); font-size: 8px; }
+.dial small { color: var(--muted); font-size: 10px; }
 
 .capacity-dial > div:last-child {
   display: flex;
@@ -1008,8 +1036,8 @@ a:focus-visible {
 }
 
 .capacity-dial > div:last-child strong { color: var(--text-soft); font-size: 10px; }
-.capacity-dial > div:last-child small { color: var(--muted); font-size: 8px; }
-.capacity-dial > div:last-child em { color: var(--signal); font-size: 8px; font-style: normal; }
+.capacity-dial > div:last-child small { color: var(--muted); font-size: 10px; }
+.capacity-dial > div:last-child em { color: var(--signal); font-size: 10px; font-style: normal; }
 
 .model-list {
   border-top: 1px solid var(--line-soft);
@@ -1051,7 +1079,7 @@ a:focus-visible {
 .model-row > span:nth-child(2) strong {
   overflow: hidden;
   color: var(--text-soft);
-  font-size: 9px;
+  font-size: 10px;
   text-overflow: ellipsis;
   white-space: nowrap;
 }
@@ -1059,7 +1087,7 @@ a:focus-visible {
 .model-row > span:nth-child(2) small,
 .model-state small {
   color: var(--muted-2);
-  font-size: 7px;
+  font-size: 9px;
 }
 
 .model-state {
@@ -1082,8 +1110,8 @@ a:focus-visible {
   box-shadow: 0 0 8px rgba(159, 245, 91, 0.35);
 }
 
-.reconcile-state strong { color: var(--positive); font-size: 9px; }
-.reconcile-state small { color: var(--muted-2); font-size: 7px; }
+.reconcile-state strong { color: var(--positive); font-size: 10px; }
+.reconcile-state small { color: var(--muted-2); font-size: 9px; }
 
 .ledger-table {
   min-width: 620px;
@@ -1107,7 +1135,7 @@ a:focus-visible {
 .table-head {
   min-height: 35px;
   color: var(--muted-2);
-  font-size: 7px;
+  font-size: 9px;
   font-weight: 700;
   letter-spacing: 0.06em;
   text-transform: uppercase;
@@ -1115,7 +1143,7 @@ a:focus-visible {
 
 .table-row {
   color: var(--muted);
-  font-size: 8px;
+  font-size: 10px;
 }
 
 .table-row > strong {
@@ -1147,7 +1175,7 @@ a:focus-visible {
   margin: 0;
   padding: 10px 18px;
   color: var(--muted-2);
-  font-size: 7px;
+  font-size: 9px;
   line-height: 1.45;
 }
 
@@ -1190,7 +1218,7 @@ a:focus-visible {
 .audit-row > span:nth-child(2) strong {
   overflow: hidden;
   color: var(--text-soft);
-  font-size: 9px;
+  font-size: 10px;
   font-weight: 600;
   text-overflow: ellipsis;
   white-space: nowrap;
@@ -1199,7 +1227,7 @@ a:focus-visible {
 .audit-row > span:nth-child(2) small,
 .audit-row time {
   color: var(--muted-2);
-  font-size: 7px;
+  font-size: 9px;
 }
 
 .audit-row b {
@@ -1216,7 +1244,7 @@ a:focus-visible {
   padding: 11px 3px 0;
   color: #465157;
   font-family: ui-monospace, "SFMono-Regular", Consolas, monospace;
-  font-size: 7px;
+  font-size: 9px;
   letter-spacing: 0.02em;
 }
 

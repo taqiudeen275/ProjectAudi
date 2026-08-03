@@ -1,3 +1,5 @@
+import type { AiDisclosureLabel } from "@audilink/contracts";
+
 export type CoverTone =
   | "ember"
   | "tide"
@@ -23,7 +25,12 @@ export type Book = {
   eyebrow?: string;
   episode?: string;
   cast?: string;
-  provenance?: string;
+  previewDurationSeconds: number;
+  provenance: {
+    narration: "human" | "aiAssisted" | "synthetic";
+    label: string;
+    disclosures: readonly AiDisclosureLabel[];
+  };
   description: string;
 };
 
@@ -44,7 +51,12 @@ export const featuredBook: Book = {
   cover: "ember",
   eyebrow: "AudiLink premiere",
   cast: "Ninefold Ensemble",
-  provenance: "AI-assisted full cast",
+  previewDurationSeconds: 180,
+  provenance: {
+    narration: "aiAssisted",
+    label: "AI-assisted full cast",
+    disclosures: ["aiNarrated", "syntheticCharacterVoices"],
+  },
   description:
     "Every map Sera draws erases a place from memory. To find her vanished brother, she must chart the one country that only appears in dreams.",
 };
@@ -63,7 +75,12 @@ export const continueListening: ContinueItem[] = [
     currentUnit: "Chapter 17 · Low water",
     remaining: "2h 56m left",
     cast: "Lina Osei & Tom Arlen",
-    provenance: "AI-assisted narration",
+    previewDurationSeconds: 180,
+    provenance: {
+      narration: "aiAssisted",
+      label: "AI-assisted narration",
+      disclosures: ["aiNarrated"],
+    },
     description:
       "Two lighthouse keepers trade letters across an impossible sea and discover that the tide is carrying more than messages.",
   },
@@ -80,7 +97,12 @@ export const continueListening: ContinueItem[] = [
     currentUnit: "Chapter 8 · The last pear",
     remaining: "5h 09m left",
     cast: "Samira Adu",
-    provenance: "Synthetic voice disclosed",
+    previewDurationSeconds: 180,
+    provenance: {
+      narration: "synthetic",
+      label: "Synthetic voice disclosed",
+      disclosures: ["syntheticCharacterVoices"],
+    },
     description:
       "A family returns to an orchard where every fruit holds a memory someone was desperate to forget.",
   },
@@ -98,7 +120,12 @@ export const trendingBooks: Book[] = [
     cover: "river",
     eyebrow: "#1 this week",
     cast: "Four-voice cast",
-    provenance: "AI-assisted full cast",
+    previewDurationSeconds: 180,
+    provenance: {
+      narration: "aiAssisted",
+      label: "AI-assisted full cast",
+      disclosures: ["aiNarrated", "syntheticCharacterVoices"],
+    },
     description:
       "A ferryman hears the names of the forgotten in the current and follows them toward a drowned kingdom.",
   },
@@ -113,7 +140,12 @@ export const trendingBooks: Book[] = [
     cover: "chrome",
     eyebrow: "Free this week",
     cast: "Jules Marlow",
-    provenance: "Human narration",
+    previewDurationSeconds: 180,
+    provenance: {
+      narration: "human",
+      label: "Human narration",
+      disclosures: [],
+    },
     description:
       "A mechanic on the final desert railway finds a machine dreaming beneath the tracks.",
   },
@@ -128,7 +160,12 @@ export const trendingBooks: Book[] = [
     cover: "bells",
     eyebrow: "Listeners’ pick",
     cast: "Mara Bell",
-    provenance: "Synthetic voice disclosed",
+    previewDurationSeconds: 180,
+    provenance: {
+      narration: "synthetic",
+      label: "Synthetic voice disclosed",
+      disclosures: ["syntheticCharacterVoices"],
+    },
     description:
       "An archivist catalogues thirteen silent bells—and hears one ring each night at midnight.",
   },
@@ -143,7 +180,12 @@ export const trendingBooks: Book[] = [
     cover: "salt",
     eyebrow: "Editor’s choice",
     cast: "Esi Badu",
-    provenance: "Human narration",
+    previewDurationSeconds: 180,
+    provenance: {
+      narration: "human",
+      label: "Human narration",
+      disclosures: [],
+    },
     description:
       "Three generations gather at a coastal home as the sea begins returning everything it once took.",
   },
@@ -159,7 +201,12 @@ export const trendingBooks: Book[] = [
     eyebrow: "Rising serial",
     episode: "Season 1 · Episode 6",
     cast: "Seven-voice cast",
-    provenance: "AI-assisted full cast",
+    previewDurationSeconds: 90,
+    provenance: {
+      narration: "aiAssisted",
+      label: "AI-assisted full cast",
+      disclosures: ["aiNarrated", "syntheticCharacterVoices"],
+    },
     description:
       "A courier crosses a continent of glass carrying a letter that can end the oldest war.",
   },
@@ -178,7 +225,12 @@ export const newSerials: Book[] = [
     eyebrow: "New serial",
     episode: "Episode 1 · The signal",
     cast: "Full cast",
-    provenance: "AI-assisted full cast",
+    previewDurationSeconds: 90,
+    provenance: {
+      narration: "aiAssisted",
+      label: "AI-assisted full cast",
+      disclosures: ["aiNarrated", "syntheticCharacterVoices"],
+    },
     description:
       "The night crew at a silent lunar station receives a distress call sent forty years from now.",
   },
@@ -194,7 +246,12 @@ export const newSerials: Book[] = [
     eyebrow: "New episode",
     episode: "Season 1 · Episode 7",
     cast: "Dual narration",
-    provenance: "Synthetic voices disclosed",
+    previewDurationSeconds: 90,
+    provenance: {
+      narration: "synthetic",
+      label: "Synthetic voices disclosed",
+      disclosures: ["syntheticCharacterVoices"],
+    },
     description:
       "A small-town reporter investigates obituaries that appear one week before their subjects disappear.",
   },
@@ -210,7 +267,12 @@ export const newSerials: Book[] = [
     eyebrow: "Season premiere",
     episode: "Season 2 · Episode 1",
     cast: "Nine-voice cast",
-    provenance: "AI-assisted full cast",
+    previewDurationSeconds: 90,
+    provenance: {
+      narration: "aiAssisted",
+      label: "AI-assisted full cast",
+      disclosures: ["aiNarrated", "syntheticCharacterVoices"],
+    },
     description:
       "Beneath every subway line is another city, and its choir has started singing the names of commuters.",
   },
