@@ -1,36 +1,40 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# AudiLink Books
 
-## Getting Started
+AudiLink Books is the listener-facing surface for discovering audiobooks and serials, resuming a library title, and previewing the future Reader Coin purchase flow. This milestone is an editorial product shell: catalog records come from `app/books-data.ts` and no production identity, commerce, entitlement, or media service is connected yet.
 
-First, run the development server:
+## Interaction safety
+
+- The Reader Coin dialog is explicitly a no-charge interaction preview. It never mutates a wallet and never creates an entitlement.
+- Paid titles stop at their declared `previewDurationSeconds`; seeking and skip controls are clamped to that limit.
+- Seeded continue-listening titles represent existing library access. Free titles play without a coin prompt.
+- Narration provenance is structured on every book and remains visible in featured, shelf, serial, and player-adjacent experiences.
+- Production checkout must settle the server ledger before issuing a permanent entitlement. Protected streaming and offline playback are not implemented by this UI preview.
+
+## Experience and motion
+
+The home follows a calm editorial hierarchy: one featured story, a compact resume row, a deliberately short weekly edit, and one serial spotlight. Search, genres, and additional shelf items are progressively disclosed. Motion is limited to state continuity—search/filter reveal, shelf layout, serial replacement, and active-player changes—using the installed Motion package. Motion respects the operating-system reduced-motion preference, with CSS and component-level fallbacks.
+
+## Run locally
+
+From the workspace root:
 
 ```bash
-npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
+bun install
+bun run dev:books
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+Or from this directory:
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+```bash
+bun run dev
+```
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+The app runs at [http://localhost:3001](http://localhost:3001).
 
-## Learn More
+## Validate
 
-To learn more about Next.js, take a look at the following resources:
-
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
-
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
-
-## Deploy on Vercel
-
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
-
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+```bash
+bun run lint
+bun run typecheck
+bun run build
+```

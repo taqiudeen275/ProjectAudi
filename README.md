@@ -6,11 +6,11 @@ AudiLink is an audio-native platform in active development. This repository cont
 - **AudiLink Books** — audiobook and serial discovery, permanent Reader Coin unlocks, library, and playback.
 - **AudiLink Admin** — role-scoped operational views for jobs, models, ledgers, moderation, and audit history.
 
-The product, architecture, AI-model, commerce, trust-and-safety, and delivery decisions are linked from [the documentation index](docs/README.md).
+The product, architecture, AI-model, commerce, trust-and-safety, delivery, and quiet-interface decisions are linked from [the documentation index](docs/README.md). The implementation-level visual and motion contract is in [the Interface Design System](docs/08-interface-design-system.md).
 
 ## Current milestone
 
-This slice establishes the Bun workspace, shared TypeScript contracts and design tokens, responsive product shells, and a schema-first Fastify control API. The UI data and protected `/v1/fixtures/*` API routes are explicitly non-production fixtures; no real credits, coins, entitlements, or earnings are mutated yet.
+This slice establishes the Bun workspace, shared TypeScript contracts and semantic design tokens, responsive product previews, and a schema-first Fastify control API. Studio separates its public landing page at `/` from its focused workspace preview at `/studio`. The UI data and protected `/v1/fixtures/*` API routes are explicitly non-production fixtures; no real credits, coins, entitlements, or earnings are mutated yet.
 
 ## Requirements
 

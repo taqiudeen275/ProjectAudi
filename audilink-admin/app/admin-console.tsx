@@ -1,17 +1,14 @@
 "use client";
 
-import { useMemo, useState } from "react";
+import { useMemo, useState, type KeyboardEvent } from "react";
 
 import {
   ROLE_PERMISSIONS,
   type AdminRole,
   type ModelFamily,
 } from "@audilink/contracts";
-import {
-  operationalTone,
-  type MetricDatum,
-  type NavigationItem,
-} from "@audilink/ui";
+import { operationalTone, type MetricDatum } from "@audilink/ui";
+import { AnimatePresence, MotionConfig, motion, useReducedMotion } from "motion/react";
 
 type NavId =
   | "overview"
@@ -24,6 +21,7 @@ type NavId =
   | "audit";
 
 type QueueFilter = "all" | "urgent" | "trust" | "models" | "finance";
+type DetailTab = "models" | "ledgers" | "audit";
 
 type IconName =
   | "grid"
@@ -34,8 +32,6 @@ type IconName =
   | "book"
   | "people"
   | "history"
-  | "search"
-  | "bell"
   | "arrow"
   | "check"
   | "clock"
@@ -47,7 +43,9 @@ interface RoleOption {
   readonly detail: string;
 }
 
-interface NavItem extends NavigationItem<NavId> {
+interface NavItem {
+  readonly id: NavId;
+  readonly label: string;
   readonly icon: IconName;
   readonly roles: readonly AdminRole[];
   readonly enabled: boolean;
@@ -75,10 +73,10 @@ const roleOptions: readonly RoleOption[] = [
 
 const navItems: readonly NavItem[] = [
   { id: "overview", label: "Overview", icon: "grid", roles: roleOptions.map((role) => role.id), enabled: true },
-  { id: "review", label: "Review queue", icon: "shield", badge: "18", roles: ["moderator", "administrator"], enabled: false },
-  { id: "generation", label: "Generation", icon: "pulse", badge: "42", roles: ["modelOperator", "support", "administrator"], enabled: false },
+  { id: "review", label: "Review queue", icon: "shield", roles: ["moderator", "administrator"], enabled: false },
+  { id: "generation", label: "Generation", icon: "pulse", roles: ["modelOperator", "support", "administrator"], enabled: false },
   { id: "models", label: "Model registry", icon: "wave", roles: ["modelOperator", "administrator"], enabled: false },
-  { id: "finance", label: "Finance", icon: "ledger", badge: "3", roles: ["finance", "administrator"], enabled: false },
+  { id: "finance", label: "Finance", icon: "ledger", roles: ["finance", "administrator"], enabled: false },
   { id: "catalog", label: "Catalog", icon: "book", roles: ["moderator", "support", "administrator"], enabled: false },
   { id: "people", label: "People & access", icon: "people", roles: ["support", "administrator"], enabled: false },
   { id: "audit", label: "Audit log", icon: "history", roles: roleOptions.map((role) => role.id), enabled: false },
@@ -86,34 +84,34 @@ const navItems: readonly NavItem[] = [
 
 const metricsByRole: Readonly<Record<AdminRole, readonly MetricDatum[]>> = {
   administrator: [
-    { label: "Platform health", value: "99.94%", detail: "Control-plane availability", tone: "positive", trend: "+0.03%" },
-    { label: "Open reviews", value: "18", detail: "4 nearing policy SLA", tone: "caution", trend: "−6 today" },
-    { label: "Active jobs", value: "42", detail: "8 GPU · 34 media", tone: "info", trend: "6.2m p50" },
-    { label: "Cross-ledger variance", value: "0", detail: "Three separate ledgers reconciled", tone: "positive", trend: "8m ago" },
+    { label: "Availability", value: "99.94%", detail: "Control plane · 24 hours", tone: "positive", trend: "+0.03%" },
+    { label: "Needs a decision", value: "18", detail: "4 approaching policy SLA", tone: "caution", trend: "−6 today" },
+    { label: "Active work", value: "42", detail: "8 GPU · 34 media jobs", tone: "info", trend: "6.2m p50" },
+    { label: "Ledger variance", value: "0", detail: "Across 3 separate ledgers", tone: "positive", trend: "8m ago" },
   ],
   moderator: [
-    { label: "Assigned reviews", value: "12", detail: "3 identity or consent", tone: "caution", trend: "−2 today" },
-    { label: "Oldest case", value: "2h 14m", detail: "Within 24-hour target", tone: "positive", trend: "Consent queue" },
-    { label: "Auto-check pass", value: "93.1%", detail: "Last 24 hours", tone: "info", trend: "+1.4%" },
-    { label: "Appeals waiting", value: "2", detail: "7-day review target", tone: "neutral", trend: "No overdue" },
+    { label: "Assigned", value: "12", detail: "3 identity or consent", tone: "caution", trend: "−2 today" },
+    { label: "Oldest case", value: "2h 14m", detail: "Within the 24-hour target", tone: "positive", trend: "Consent" },
+    { label: "Checks passed", value: "93.1%", detail: "Automated review · 24 hours", tone: "info", trend: "+1.4%" },
+    { label: "Appeals", value: "2", detail: "No overdue decisions", tone: "neutral", trend: "7-day target" },
   ],
   finance: [
-    { label: "Cross-ledger variance", value: "0", detail: "Three separate ledgers reconciled", tone: "positive", trend: "8m ago" },
+    { label: "Ledger variance", value: "0", detail: "Across 3 separate ledgers", tone: "positive", trend: "8m ago" },
     { label: "Payout holds", value: "3", detail: "2 KYC · 1 consent", tone: "caution", trend: "$412.80" },
     { label: "Pending earnings", value: "$8.4k", detail: "14-day rolling hold", tone: "info", trend: "+6.8%" },
-    { label: "Webhook lag", value: "1.2s", detail: "Payment providers", tone: "positive", trend: "p95" },
+    { label: "Webhook lag", value: "1.2s", detail: "Payment providers · p95", tone: "positive", trend: "Stable" },
   ],
   modelOperator: [
-    { label: "Generation success", value: "98.7%", detail: "Accepted jobs, 24h", tone: "positive", trend: "+0.6%" },
-    { label: "Active jobs", value: "42", detail: "8 GPU · 34 media", tone: "info", trend: "6.2m p50" },
-    { label: "Queue pressure", value: "0.72×", detail: "Managed GPU capacity", tone: "positive", trend: "Stable" },
+    { label: "Success", value: "98.7%", detail: "Accepted generations · 24 hours", tone: "positive", trend: "+0.6%" },
+    { label: "Active work", value: "42", detail: "8 GPU · 34 media jobs", tone: "info", trend: "6.2m p50" },
+    { label: "GPU pressure", value: "72%", detail: "Managed primary pool", tone: "positive", trend: "Stable" },
     { label: "Restricted routes", value: "1", detail: "Fish S2-Pro license gate", tone: "caution", trend: "Launch blocker" },
   ],
   support: [
-    { label: "Open conversations", value: "24", detail: "6 awaiting staff reply", tone: "info", trend: "11m median" },
+    { label: "Conversations", value: "24", detail: "6 awaiting staff reply", tone: "info", trend: "11m median" },
     { label: "Affected jobs", value: "3", detail: "User-visible failures", tone: "caution", trend: "−4 today" },
-    { label: "Session health", value: "99.98%", detail: "Cross-surface auth", tone: "positive", trend: "24h" },
-    { label: "Storage alerts", value: "5", detail: "Accounts at 90%+", tone: "neutral", trend: "No lockouts" },
+    { label: "Session health", value: "99.98%", detail: "Cross-surface auth · 24 hours", tone: "positive", trend: "Stable" },
+    { label: "Storage alerts", value: "5", detail: "Accounts at 90% or more", tone: "neutral", trend: "No lockouts" },
   ],
 };
 
@@ -123,8 +121,8 @@ const queueItems: readonly QueueItem[] = [
     category: "trust",
     ownerRole: "moderator",
     title: "Public voice consent mismatch",
-    detail: "Voice · “Calm coastal narrator”",
-    signal: "Identity comparison requires human decision",
+    detail: "Voice · Calm coastal narrator",
+    signal: "Identity comparison requires a human decision before this voice can be listed.",
     age: "18m",
     priority: "urgent",
     status: "review",
@@ -133,9 +131,9 @@ const queueItems: readonly QueueItem[] = [
     id: "FIN-0281",
     category: "finance",
     ownerRole: "finance",
-    title: "Payout blocked by active consent case",
+    title: "Payout held by an active consent case",
     detail: "Creator payout · GHS settlement",
-    signal: "Hold is policy-linked; no ledger mutation",
+    signal: "The hold is policy-linked; no ledger mutation has been made.",
     age: "41m",
     priority: "high",
     status: "blocked",
@@ -144,9 +142,9 @@ const queueItems: readonly QueueItem[] = [
     id: "JOB-7624",
     category: "models",
     ownerRole: "modelOperator",
-    title: "TADA 3B batch exceeded latency target",
+    title: "TADA 3B exceeded its latency target",
     detail: "Audiobook render · Attempt 2",
-    signal: "12 completed segments are reusable",
+    signal: "Twelve completed segments are reusable if the job is retried.",
     age: "1h",
     priority: "high",
     status: "running",
@@ -155,9 +153,9 @@ const queueItems: readonly QueueItem[] = [
     id: "REV-1044",
     category: "trust",
     ownerRole: "moderator",
-    title: "Serial release awaiting quality review",
+    title: "Serial release needs quality review",
     detail: "Publication · 9 episodes",
-    signal: "Automated checks passed 31 of 32 rules",
+    signal: "Automated checks passed 31 of 32 policy and quality rules.",
     age: "2h",
     priority: "normal",
     status: "pending",
@@ -166,9 +164,9 @@ const queueItems: readonly QueueItem[] = [
     id: "FIN-0278",
     category: "finance",
     ownerRole: "finance",
-    title: "Reader Coin promotion near budget cap",
+    title: "Reader Coin promotion is near its cap",
     detail: "Referral campaign · Launch cohort B",
-    signal: "92% of funded fiat liability allocated",
+    signal: "Ninety-two percent of its funded fiat liability is allocated.",
     age: "3h",
     priority: "normal",
     status: "pending",
@@ -189,266 +187,390 @@ const modelHealth: readonly {
 ];
 
 const reconciliationRows = [
-  { unit: "Studio Credits", issued: "126.4M", activity: "3.82M settled", variance: "0", state: "reconciled" },
-  { unit: "Reader Coins", issued: "2.18M", activity: "94.6K redeemed", variance: "0", state: "reconciled" },
-  { unit: "Fiat liabilities", issued: "$48.2K", activity: "$8.4K pending", variance: "0", state: "reconciled" },
+  { unit: "Studio Credits", liability: "126.4M issued", activity: "3.82M settled", variance: "0" },
+  { unit: "Reader Coins", liability: "2.18M issued", activity: "94.6K redeemed", variance: "0" },
+  { unit: "Fiat earnings", liability: "$48.2K liability", activity: "$8.4K pending", variance: "0" },
 ] as const;
 
 const auditEvents = [
-  { initials: "NM", actor: "Naa Mensah", action: "Approved publication release", target: "PUB-0284", time: "8m ago", tone: "positive" as const },
-  { initials: "SK", actor: "Sam K.", action: "Requested second approval", target: "FIN-0281", time: "21m ago", tone: "caution" as const },
-  { initials: "OP", actor: "Model operator", action: "Paused TADA 3B Studio route", target: "ROUTE-014", time: "34m ago", tone: "info" as const },
-  { initials: "SY", actor: "System", action: "Completed ledger reconciliation", target: "REC-8840", time: "42m ago", tone: "neutral" as const },
+  { initials: "NM", actor: "Naa Mensah", action: "Approved publication release", target: "PUB-0284", time: "8m ago" },
+  { initials: "SK", actor: "Sam K.", action: "Requested second approval", target: "FIN-0281", time: "21m ago" },
+  { initials: "OP", actor: "Model operator", action: "Paused TADA 3B Studio route", target: "ROUTE-014", time: "34m ago" },
+  { initials: "SY", actor: "System", action: "Completed ledger reconciliation", target: "REC-8840", time: "42m ago" },
 ] as const;
+
+const filterLabels: Readonly<Record<QueueFilter, string>> = {
+  all: "All",
+  urgent: "Urgent",
+  trust: "Trust & safety",
+  models: "Models",
+  finance: "Finance",
+};
+
+const detailLabels: Readonly<Record<DetailTab, string>> = {
+  models: "Model routes",
+  ledgers: "Ledgers",
+  audit: "Audit trail",
+};
 
 function Icon({ name }: { readonly name: IconName }) {
   const paths: Readonly<Record<IconName, React.ReactNode>> = {
-    grid: <><rect x="3" y="3" width="7" height="7" rx="1"/><rect x="14" y="3" width="7" height="7" rx="1"/><rect x="3" y="14" width="7" height="7" rx="1"/><rect x="14" y="14" width="7" height="7" rx="1"/></>,
-    shield: <><path d="M12 3 20 6v5c0 5.2-3.2 8.5-8 10-4.8-1.5-8-4.8-8-10V6l8-3Z"/><path d="m9 12 2 2 4-4"/></>,
-    pulse: <path d="M3 12h4l2.2-6 4.1 12 2.2-6H21"/>,
-    wave: <><path d="M4 14V10"/><path d="M8 18V6"/><path d="M12 21V3"/><path d="M16 17V7"/><path d="M20 14v-4"/></>,
-    ledger: <><rect x="4" y="3" width="16" height="18" rx="2"/><path d="M8 8h8M8 12h8M8 16h4"/></>,
-    book: <><path d="M4 5.5A3.5 3.5 0 0 1 7.5 2H11v18H7.5A3.5 3.5 0 0 0 4 23V5.5Z"/><path d="M20 5.5A3.5 3.5 0 0 0 16.5 2H13v18h3.5A3.5 3.5 0 0 1 20 23V5.5Z"/></>,
-    people: <><circle cx="9" cy="8" r="3"/><circle cx="17" cy="9" r="2.5"/><path d="M3.5 20a5.5 5.5 0 0 1 11 0M14 15.5a4.5 4.5 0 0 1 6.5 4"/></>,
-    history: <><path d="M4 5v5h5"/><path d="M5.4 16.5A8 8 0 1 0 4 10"/><path d="M12 7v5l3 2"/></>,
-    search: <><circle cx="10.5" cy="10.5" r="6.5"/><path d="m16 16 5 5"/></>,
-    bell: <><path d="M18 9a6 6 0 0 0-12 0c0 7-3 7-3 9h18c0-2-3-2-3-9"/><path d="M10 21h4"/></>,
-    arrow: <><path d="M5 12h14"/><path d="m14 7 5 5-5 5"/></>,
-    check: <path d="m5 12 4 4L19 6"/>,
-    clock: <><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 2"/></>,
-    lock: <><rect x="5" y="10" width="14" height="11" rx="2"/><path d="M8 10V7a4 4 0 0 1 8 0v3"/></>,
+    grid: <><rect x="4" y="4" width="6" height="6" rx="1.5" /><rect x="14" y="4" width="6" height="6" rx="1.5" /><rect x="4" y="14" width="6" height="6" rx="1.5" /><rect x="14" y="14" width="6" height="6" rx="1.5" /></>,
+    shield: <><path d="M12 3 20 6v5c0 5.2-3.2 8.5-8 10-4.8-1.5-8-4.8-8-10V6l8-3Z" /><path d="m9 12 2 2 4-4" /></>,
+    pulse: <path d="M3 12h4l2.2-6 4.1 12 2.2-6H21" />,
+    wave: <><path d="M5 14v-4" /><path d="M9 18V6" /><path d="M13 20V4" /><path d="M17 16V8" /><path d="M21 14v-4" /></>,
+    ledger: <><rect x="5" y="3" width="14" height="18" rx="2" /><path d="M8 8h8M8 12h8M8 16h5" /></>,
+    book: <><path d="M4 5.5A3.5 3.5 0 0 1 7.5 2H11v18H7.5A3.5 3.5 0 0 0 4 23V5.5Z" /><path d="M20 5.5A3.5 3.5 0 0 0 16.5 2H13v18h3.5A3.5 3.5 0 0 1 20 23V5.5Z" /></>,
+    people: <><circle cx="9" cy="8" r="3" /><circle cx="17" cy="9" r="2.5" /><path d="M3.5 20a5.5 5.5 0 0 1 11 0M14 15.5a4.5 4.5 0 0 1 6.5 4" /></>,
+    history: <><path d="M4 5v5h5" /><path d="M5.4 16.5A8 8 0 1 0 4 10" /><path d="M12 7v5l3 2" /></>,
+    arrow: <><path d="M5 12h14" /><path d="m14 7 5 5-5 5" /></>,
+    check: <path d="m5 12 4 4L19 6" />,
+    clock: <><circle cx="12" cy="12" r="9" /><path d="M12 7v5l3 2" /></>,
+    lock: <><rect x="5" y="10" width="14" height="11" rx="2" /><path d="M8 10V7a4 4 0 0 1 8 0v3" /></>,
   };
 
   return (
-    <svg className="icon" viewBox="0 0 24 24" aria-hidden="true" fill="none" stroke="currentColor" strokeWidth="1.7" strokeLinecap="round" strokeLinejoin="round">
+    <svg className="icon" viewBox="0 0 24 24" aria-hidden="true" fill="none" stroke="currentColor" strokeWidth="1.65" strokeLinecap="round" strokeLinejoin="round">
       {paths[name]}
     </svg>
   );
 }
 
-function StatusPill({ status }: { readonly status: string }) {
-  const tone = operationalTone(status);
-  return <span className={`status-pill tone-${tone}`}><span className="status-dot" />{status}</span>;
+function Status({ status }: { readonly status: string }) {
+  return (
+    <span className={`status tone-${operationalTone(status)}`}>
+      <span aria-hidden="true" />
+      {status}
+    </span>
+  );
 }
 
-function MetricCard({ metric, index }: { readonly metric: MetricDatum; readonly index: number }) {
-  const sparkHeights = [36, 52, 44, 68, 59, 76, 66, 84];
-  return (
-    <article className="metric-card" style={{ "--delay": `${index * 45}ms` } as React.CSSProperties}>
-      <div className="metric-heading">
-        <span>{metric.label}</span>
-        <span className={`metric-signal tone-${metric.tone}`} />
-      </div>
-      <strong>{metric.value}</strong>
-      <div className="metric-footer">
-        <span>{metric.detail}</span>
-        <span className="metric-trend">{metric.trend}</span>
-      </div>
-      <div className={`spark tone-${metric.tone}`} aria-hidden="true">
-        {sparkHeights.map((height, sparkIndex) => (
-          <span key={sparkIndex} style={{ height: `${Math.max(18, height - index * 4 + (sparkIndex % 2) * 4)}%` }} />
+function DetailsPanel({ activeTab }: { readonly activeTab: DetailTab }) {
+  if (activeTab === "models") {
+    return (
+      <div className="model-list">
+        <div className="detail-intro">
+          <div><strong>Primary pool at 72%</strong><span>11 of 16 GPU slots warm</span></div>
+          <p>Every route shown here is internal or a release candidate; no unbenchmarked language is presented as GA.</p>
+        </div>
+        {modelHealth.map((model) => (
+          <div className="model-row" key={model.family}>
+            <span className={`model-mark tone-${operationalTone(model.health)}`} aria-hidden="true" />
+            <span><strong>{model.name}</strong><small>{model.route}</small></span>
+            <span><Status status={model.health} /><small>{model.metric}</small></span>
+          </div>
         ))}
       </div>
-    </article>
+    );
+  }
+
+  if (activeTab === "ledgers") {
+    return (
+      <div className="ledger-view">
+        <div className="detail-intro">
+          <div><strong>Balanced</strong><span>Reconciliation REC-8840 · 8m ago</span></div>
+          <p>Studio Credits, Reader Coins, and fiat earnings are separate ledgers. Their units are never exchanged or combined.</p>
+        </div>
+        <div className="ledger-table" role="table" aria-label="Ledger reconciliation summary">
+          <div className="table-head" role="row">
+            <span role="columnheader">Ledger</span><span role="columnheader">Liability</span><span role="columnheader">Recent activity</span><span role="columnheader">Variance</span>
+          </div>
+          {reconciliationRows.map((row) => (
+            <div className="table-row" role="row" key={row.unit}>
+              <strong role="cell">{row.unit}</strong><span role="cell">{row.liability}</span><span role="cell">{row.activity}</span><span role="cell" className="variance"><Icon name="check" />{row.variance}</span>
+            </div>
+          ))}
+        </div>
+        <p className="invariant-note"><Icon name="lock" />Ledger entries are immutable. Corrections require a reasoned compensating transaction; high-risk adjustments require dual approval.</p>
+      </div>
+    );
+  }
+
+  return (
+    <div className="audit-list">
+      <div className="detail-intro">
+        <div><strong>Immutable activity</strong><span>Most recent first</span></div>
+        <p>Every privileged action captures its actor, scope, reason, and resulting record version.</p>
+      </div>
+      {auditEvents.map((event) => (
+        <div className="audit-row" key={`${event.target}-${event.time}`}>
+          <span className="audit-avatar" aria-hidden="true">{event.initials}</span>
+          <span><strong>{event.action}</strong><small>{event.actor} · <b>{event.target}</b></small></span>
+          <time>{event.time}</time>
+        </div>
+      ))}
+    </div>
   );
 }
 
 export function AdminConsole() {
+  const reduceMotion = useReducedMotion();
   const [activeRole, setActiveRole] = useState<AdminRole>("administrator");
-  const [activeSection, setActiveSection] = useState<NavId>("overview");
   const [queueFilter, setQueueFilter] = useState<QueueFilter>("all");
+  const [selectedQueueId, setSelectedQueueId] = useState(queueItems[0]?.id ?? "");
+  const [activeDetail, setActiveDetail] = useState<DetailTab>("models");
 
   const roleMeta = roleOptions.find((role) => role.id === activeRole) ?? roleOptions[0];
   const visibleNav = navItems.filter((item) => item.roles.includes(activeRole));
   const metrics = metricsByRole[activeRole];
-  const filteredQueue = useMemo(() => {
-    return queueItems.filter((item) => {
-      const roleMatch = activeRole === "administrator" || item.ownerRole === activeRole;
-      const filterMatch = queueFilter === "all"
-        || (queueFilter === "urgent" && item.priority === "urgent")
-        || item.category === queueFilter;
-      return roleMatch && filterMatch;
+  const scopedQueue = useMemo(
+    () => queueItems.filter((item) => activeRole === "administrator" || item.ownerRole === activeRole),
+    [activeRole],
+  );
+  const availableFilters = useMemo(() => {
+    const filters: QueueFilter[] = ["all"];
+    if (scopedQueue.some((item) => item.priority === "urgent")) filters.push("urgent");
+    (["trust", "models", "finance"] as const).forEach((category) => {
+      if (scopedQueue.some((item) => item.category === category)) filters.push(category);
     });
-  }, [activeRole, queueFilter]);
+    return filters;
+  }, [scopedQueue]);
+  const filteredQueue = useMemo(
+    () => scopedQueue.filter((item) => queueFilter === "all" || (queueFilter === "urgent" ? item.priority === "urgent" : item.category === queueFilter)),
+    [queueFilter, scopedQueue],
+  );
+  const selectedItem = filteredQueue.find((item) => item.id === selectedQueueId) ?? filteredQueue[0];
+  const availableDetails = useMemo<readonly DetailTab[]>(() => {
+    if (activeRole === "administrator") return ["models", "ledgers", "audit"];
+    if (activeRole === "modelOperator") return ["models", "audit"];
+    if (activeRole === "finance") return ["ledgers", "audit"];
+    return ["audit"];
+  }, [activeRole]);
+
+  const enter = reduceMotion ? { opacity: 1 } : { opacity: 1, y: 0 };
+  const exit = reduceMotion ? { opacity: 0 } : { opacity: 0, y: 6 };
 
   const changeRole = (nextRole: AdminRole) => {
+    const nextQueue = queueItems.filter((item) => nextRole === "administrator" || item.ownerRole === nextRole);
+    const nextDetails: readonly DetailTab[] = nextRole === "administrator"
+      ? ["models", "ledgers", "audit"]
+      : nextRole === "modelOperator"
+        ? ["models", "audit"]
+        : nextRole === "finance"
+          ? ["ledgers", "audit"]
+          : ["audit"];
+
     setActiveRole(nextRole);
-    setActiveSection("overview");
     setQueueFilter("all");
+    setSelectedQueueId(nextQueue[0]?.id ?? "");
+    setActiveDetail(nextDetails[0] ?? "audit");
+  };
+
+  const changeFilter = (nextFilter: QueueFilter) => {
+    const nextItems = scopedQueue.filter((item) => nextFilter === "all" || (nextFilter === "urgent" ? item.priority === "urgent" : item.category === nextFilter));
+    setQueueFilter(nextFilter);
+    setSelectedQueueId(nextItems[0]?.id ?? "");
+  };
+
+  const handleTabKeyDown = (event: KeyboardEvent<HTMLDivElement>) => {
+    if (!["ArrowLeft", "ArrowRight", "Home", "End"].includes(event.key)) return;
+    event.preventDefault();
+    const currentIndex = availableDetails.indexOf(activeDetail);
+    const nextIndex = event.key === "Home"
+      ? 0
+      : event.key === "End"
+        ? availableDetails.length - 1
+        : event.key === "ArrowRight"
+          ? (currentIndex + 1) % availableDetails.length
+          : (currentIndex - 1 + availableDetails.length) % availableDetails.length;
+    const nextTab = availableDetails[nextIndex];
+    if (!nextTab) return;
+    setActiveDetail(nextTab);
+    requestAnimationFrame(() => document.getElementById(`detail-tab-${nextTab}`)?.focus());
   };
 
   return (
-    <div className="admin-shell">
-      <a className="skip-link" href="#main-content">Skip to operations</a>
+    <MotionConfig reducedMotion="user" transition={{ duration: 0.2, ease: [0.22, 1, 0.36, 1] }}>
+      <div className="admin-shell">
+        <a className="skip-link" href="#main-content">Skip to operations</a>
 
-      <aside className="sidebar">
-        <div className="brand-lockup">
-          <span className="brand-mark" aria-hidden="true"><i /><i /><i /><i /><i /></span>
-          <span><strong>AudiLink</strong><small>ADMIN</small></span>
-        </div>
-
-        <div className="environment-chip"><span />Non-production preview</div>
-
-        <nav className="primary-nav" aria-label="Admin sections">
-          <p>WORKSPACE</p>
-          {visibleNav.map((item) => (
-            <button
-              key={item.id}
-              className={activeSection === item.id ? "nav-item active" : "nav-item"}
-              onClick={() => setActiveSection(item.id)}
-              type="button"
-              disabled={!item.enabled}
-              aria-label={item.enabled ? item.label : `${item.label} (planned section)`}
-              title={item.enabled ? item.label : "Planned section — not available in this preview"}
-              aria-current={activeSection === item.id ? "page" : undefined}
-            >
-              <Icon name={item.icon} />
-              <span>{item.label}</span>
-              {item.badge ? <em>{item.badge}</em> : null}
-            </button>
-          ))}
-        </nav>
-
-        <div className="sidebar-spacer" />
-        <div className="security-card">
-          <span className="security-icon"><Icon name="lock" /></span>
-          <div><strong>MFA verified</strong><small>Step-up available</small></div>
-          <span className="security-check"><Icon name="check" /></span>
-        </div>
-        <button className="profile-button" type="button" disabled aria-label="Account menu (not available in this preview)">
-          <span className="avatar">AO</span>
-          <span><strong>Admin Operator</strong><small>{roleMeta?.label}</small></span>
-          <span className="profile-more">•••</span>
-        </button>
-      </aside>
-
-      <main id="main-content" className="main-content">
-        <header className="topbar">
-          <div className="breadcrumb"><span>Operations</span><b>/</b><strong>{navItems.find((item) => item.id === activeSection)?.label ?? "Overview"}</strong></div>
-          <div className="top-actions">
-            <button className="search-button" type="button" disabled aria-label="Search records (not available in this preview)"><Icon name="search" /><span>Search records</span><kbd>⌘ K</kbd></button>
-            <button className="icon-button" type="button" disabled aria-label="Notifications (not available in this preview)"><Icon name="bell" /><span /></button>
+        <aside className="sidebar">
+          <div className="brand-lockup">
+            <span className="brand-mark" aria-hidden="true"><i /><i /><i /></span>
+            <span><strong>AudiLink</strong><small>Admin</small></span>
           </div>
-        </header>
 
-        <div className="content-wrap">
-          <section className="page-intro" aria-labelledby="overview-title">
-            <div>
-              <div className="eyebrow"><span />CONTROL PLANE · SCENARIO DATA</div>
-              <h1 id="overview-title">Good morning, operator.</h1>
-              <p>A single view of platform health, review pressure, model capacity, and financial integrity.</p>
-            </div>
-            <div className="role-picker">
-              <label htmlFor="role-scope">Preview role scope</label>
-              <select id="role-scope" aria-describedby="role-scope-detail" value={activeRole} onChange={(event) => changeRole(event.target.value as AdminRole)}>
-                {roleOptions.map((role) => <option key={role.id} value={role.id}>{role.label}</option>)}
-              </select>
-              <small id="role-scope-detail">{ROLE_PERMISSIONS[activeRole].length} permissions · {roleMeta?.detail}</small>
-            </div>
-          </section>
+          <nav className="primary-nav" aria-label="Admin sections">
+            {visibleNav.map((item) => (
+              <button
+                key={item.id}
+                className={item.id === "overview" ? "nav-item active" : "nav-item"}
+                type="button"
+                disabled={!item.enabled}
+                aria-label={item.enabled ? item.label : `${item.label} (planned section)`}
+                title={item.enabled ? item.label : "Planned section — unavailable in this preview"}
+                aria-current={item.id === "overview" ? "page" : undefined}
+              >
+                <Icon name={item.icon} />
+                <span>{item.label}</span>
+                {item.id === "overview" ? <motion.i layoutId="admin-nav-marker" aria-hidden="true" /> : null}
+              </button>
+            ))}
+          </nav>
 
-          <section className="system-strip" aria-label="System status">
-            <div className="system-status"><span className="live-orbit"><i /></span><strong>All core systems nominal</strong><small>Last fixture snapshot 14 seconds ago</small></div>
-            <div className="system-facts">
-              <span><i />API <strong>84 ms</strong></span>
-              <span><i />Workflows <strong>42 active</strong></span>
-              <span><i />Primary region <strong>healthy</strong></span>
-              <button type="button" disabled aria-label="Open health view (not available in this preview)">Open health view <Icon name="arrow" /></button>
-            </div>
-          </section>
+          <div className="sidebar-note">
+            <span className="preview-dot" aria-hidden="true" />
+            <span><strong>Preview environment</strong><small>Scenario data only</small></span>
+          </div>
+          <div className="operator">
+            <span className="avatar">AO</span>
+            <span><strong>Admin Operator</strong><small>MFA verified</small></span>
+          </div>
+        </aside>
 
-          <section className="metric-grid" aria-live="polite" aria-label={`${roleMeta?.label} metrics`}>
-            {metrics.map((metric, index) => <MetricCard key={metric.label} metric={metric} index={index} />)}
-          </section>
+        <main id="main-content" className="main-content">
+          <header className="topbar">
+            <span>Control plane</span>
+            <div><span className="live-state"><i aria-hidden="true" />Core systems nominal</span><small>Fixture snapshot · 14s ago</small></div>
+          </header>
 
-          <div className="operations-grid">
-            <section className="panel queue-panel">
-              <div className="panel-header">
-                <div><span className="section-kicker">DECISION QUEUE</span><h2>Needs attention</h2></div>
-                <button className="text-button" type="button" disabled aria-label="Open full queue (not available in this preview)">Open full queue <Icon name="arrow" /></button>
+          <div className="content-wrap">
+            <section className="page-intro" aria-labelledby="overview-title">
+              <div>
+                <span className="eyebrow">Operations overview</span>
+                <h1 id="overview-title">See what needs a decision.</h1>
+                <p>Health stays quiet until an operator needs context or action.</p>
               </div>
+              <label className="role-picker" htmlFor="role-scope">
+                <span>Viewing as</span>
+                <select id="role-scope" value={activeRole} onChange={(event) => changeRole(event.target.value as AdminRole)}>
+                  {roleOptions.map((role) => <option key={role.id} value={role.id}>{role.label}</option>)}
+                </select>
+                <small>{ROLE_PERMISSIONS[activeRole].length} permissions · {roleMeta?.detail}</small>
+              </label>
+            </section>
+
+            <AnimatePresence mode="wait" initial={false}>
+              <motion.section
+                className="health-summary"
+                key={activeRole}
+                aria-live="polite"
+                aria-label={`${roleMeta?.label} health summary`}
+                initial={reduceMotion ? { opacity: 0 } : { opacity: 0, y: 6 }}
+                animate={enter}
+                exit={exit}
+              >
+                {metrics.map((metric, index) => (
+                  <article className={index === 0 ? "health-metric primary" : "health-metric"} key={metric.label}>
+                    <div><span>{metric.label}</span><i className={`tone-${metric.tone}`} aria-hidden="true" /></div>
+                    <strong>{metric.value}</strong>
+                    <p>{metric.detail}</p>
+                    <small>{metric.trend}</small>
+                  </article>
+                ))}
+              </motion.section>
+            </AnimatePresence>
+
+            <section className="decision-section" aria-labelledby="decision-title">
+              <div className="section-heading">
+                <div><span className="eyebrow">Decision focus</span><h2 id="decision-title">Needs attention</h2></div>
+                <p>{scopedQueue.length} items in this role scope</p>
+              </div>
+
               <div className="filter-row" role="group" aria-label="Filter decision queue">
-                {(["all", "urgent", "trust", "models", "finance"] as const).map((filter) => (
-                  <button key={filter} className={queueFilter === filter ? "filter active" : "filter"} type="button" aria-pressed={queueFilter === filter} onClick={() => setQueueFilter(filter)}>
-                    {filter === "trust" ? "Trust & safety" : filter}
+                {availableFilters.map((filter) => (
+                  <button key={filter} type="button" aria-pressed={queueFilter === filter} onClick={() => changeFilter(filter)}>
+                    {queueFilter === filter ? <motion.span layoutId="queue-filter" aria-hidden="true" /> : null}
+                    <b>{filterLabels[filter]}</b>
                   </button>
                 ))}
               </div>
-              <div className="queue-list">
-                {filteredQueue.length ? filteredQueue.map((item) => (
-                  <button className="queue-row" type="button" key={item.id} disabled aria-label={`${item.id}: ${item.title}. Details are not available in this preview.`}>
-                    <span className={`priority-mark priority-${item.priority}`} />
-                    <span className="queue-main"><strong>{item.title}</strong><small>{item.detail}</small><em>{item.signal}</em></span>
-                    <span className="queue-meta"><StatusPill status={item.status} /><small><Icon name="clock" />{item.age}</small><b>{item.id}</b></span>
-                    <span className="row-arrow"><Icon name="arrow" /></span>
+
+              <div className="decision-workspace">
+                <div className="queue-list" aria-label="Decision queue">
+                  <AnimatePresence initial={false} mode="popLayout">
+                    {filteredQueue.map((item) => (
+                      <motion.button
+                        layout
+                        key={item.id}
+                        className={selectedItem?.id === item.id ? "queue-row selected" : "queue-row"}
+                        type="button"
+                        aria-pressed={selectedItem?.id === item.id}
+                        onClick={() => setSelectedQueueId(item.id)}
+                        initial={reduceMotion ? { opacity: 0 } : { opacity: 0, y: 5 }}
+                        animate={enter}
+                        exit={exit}
+                      >
+                        <span className={`priority priority-${item.priority}`} role="img" aria-label={`${item.priority} priority`} />
+                        <span><strong>{item.title}</strong><small>{item.detail}</small></span>
+                        <span><Status status={item.status} /><small>{item.age}</small></span>
+                      </motion.button>
+                    ))}
+                  </AnimatePresence>
+                  {!filteredQueue.length ? <div className="empty-state"><Icon name="check" /><strong>Nothing waiting here.</strong><span>Choose another filter to inspect the queue.</span></div> : null}
+                </div>
+
+                <AnimatePresence mode="wait" initial={false}>
+                  {selectedItem ? (
+                    <motion.article
+                      className="decision-detail"
+                      key={selectedItem.id}
+                      initial={reduceMotion ? { opacity: 0 } : { opacity: 0, x: 8 }}
+                      animate={reduceMotion ? { opacity: 1 } : { opacity: 1, x: 0 }}
+                      exit={reduceMotion ? { opacity: 0 } : { opacity: 0, x: -8 }}
+                    >
+                      <div className="detail-topline"><span>{selectedItem.id}</span><Status status={selectedItem.status} /></div>
+                      <h3>{selectedItem.title}</h3>
+                      <p>{selectedItem.signal}</p>
+                      <dl>
+                        <div><dt>Owner</dt><dd>{roleOptions.find((role) => role.id === selectedItem.ownerRole)?.label}</dd></div>
+                        <div><dt>Waiting</dt><dd>{selectedItem.age}</dd></div>
+                        <div><dt>Priority</dt><dd>{selectedItem.priority}</dd></div>
+                      </dl>
+                      <div className="detail-footer">
+                        <span>Scenario record — no production action</span>
+                        <button type="button" disabled aria-label="Open record (unavailable in this preview)">Open record <Icon name="arrow" /></button>
+                      </div>
+                    </motion.article>
+                  ) : null}
+                </AnimatePresence>
+              </div>
+            </section>
+
+            <section className="details-section" aria-labelledby="details-title">
+              <div className="section-heading compact">
+                <div><span className="eyebrow">Operational detail</span><h2 id="details-title">Inspect one layer at a time</h2></div>
+              </div>
+              <div className="detail-tabs" role="tablist" aria-label="Operational detail" onKeyDown={handleTabKeyDown}>
+                {availableDetails.map((tab) => (
+                  <button
+                    id={`detail-tab-${tab}`}
+                    key={tab}
+                    type="button"
+                    role="tab"
+                    tabIndex={activeDetail === tab ? 0 : -1}
+                    aria-selected={activeDetail === tab}
+                    aria-controls="detail-panel"
+                    onClick={() => setActiveDetail(tab)}
+                  >
+                    {detailLabels[tab]}
+                    {activeDetail === tab ? <motion.span layoutId="detail-tab-marker" aria-hidden="true" /> : null}
                   </button>
-                )) : (
-                  <div className="empty-state"><Icon name="check" /><strong>Nothing waiting in this scope</strong><span>Try another queue filter or role.</span></div>
-                )}
-              </div>
-            </section>
-
-            <section className="panel model-panel">
-              <div className="panel-header compact">
-                <div><span className="section-kicker">INFERENCE</span><h2>Model routes</h2></div>
-                <button className="icon-button small" type="button" disabled aria-label="Open model registry (not available in this preview)"><Icon name="arrow" /></button>
-              </div>
-              <div className="capacity-dial">
-                <div className="dial"><span><strong>72</strong><small>%</small></span></div>
-                <div><strong>GPU capacity</strong><small>Managed pool · primary region</small><em>11 of 16 slots warm</em></div>
-              </div>
-              <div className="model-list">
-                {modelHealth.map((model) => (
-                  <div className="model-row" key={model.family}>
-                    <span className={`model-glyph tone-${operationalTone(model.health)}`}><Icon name="wave" /></span>
-                    <span><strong>{model.name}</strong><small>{model.route}</small></span>
-                    <span className="model-state"><StatusPill status={model.health} /><small>{model.metric}</small></span>
-                  </div>
                 ))}
               </div>
+              <AnimatePresence mode="wait" initial={false}>
+                <motion.div
+                  id="detail-panel"
+                  className="detail-panel"
+                  role="tabpanel"
+                  aria-labelledby={`detail-tab-${activeDetail}`}
+                  key={`${activeRole}-${activeDetail}`}
+                  initial={reduceMotion ? { opacity: 0 } : { opacity: 0, y: 6 }}
+                  animate={enter}
+                  exit={exit}
+                >
+                  <DetailsPanel activeTab={activeDetail} />
+                </motion.div>
+              </AnimatePresence>
             </section>
+
+            <footer className="console-footer">
+              <span>Non-production preview · Scenario fixture only</span>
+              <span>Contract v1 · Primary region</span>
+            </footer>
           </div>
-
-          <div className="bottom-grid">
-            <section className="panel ledger-panel">
-              <div className="panel-header">
-                <div><span className="section-kicker">FINANCIAL INTEGRITY</span><h2>Ledger reconciliation</h2></div>
-                <div className="reconcile-state"><span /><strong>Balanced</strong><small>Run REC-8840</small></div>
-              </div>
-              <div className="ledger-table" role="table" aria-label="Ledger reconciliation summary">
-                <div className="table-head" role="row"><span role="columnheader">Unit</span><span role="columnheader">Total liability</span><span role="columnheader">Recent activity</span><span role="columnheader">Variance</span><span role="columnheader">State</span></div>
-                {reconciliationRows.map((row) => (
-                  <div className="table-row" role="row" key={row.unit}>
-                    <strong role="cell"><span className="unit-mark" />{row.unit}</strong><span role="cell">{row.issued}</span><span role="cell">{row.activity}</span><span role="cell" className="mono">{row.variance}</span><span role="cell"><StatusPill status={row.state} /></span>
-                  </div>
-                ))}
-              </div>
-              <p className="invariant-note"><Icon name="lock" /><span>Entries are immutable. Corrections require a reasoned compensating transaction; high-risk adjustments require dual approval.</span></p>
-            </section>
-
-            <section className="panel audit-panel">
-              <div className="panel-header compact">
-                <div><span className="section-kicker">ACCOUNTABILITY</span><h2>Audit activity</h2></div>
-                <button className="text-button" type="button" disabled aria-label="View all audit activity (not available in this preview)">View all <Icon name="arrow" /></button>
-              </div>
-              <div className="audit-list">
-                {auditEvents.map((event) => (
-                  <div className="audit-row" key={`${event.target}-${event.time}`}>
-                    <span className={`audit-avatar tone-${event.tone}`}>{event.initials}</span>
-                    <span><strong>{event.action}</strong><small>{event.actor} · <b>{event.target}</b></small></span>
-                    <time>{event.time}</time>
-                  </div>
-                ))}
-              </div>
-            </section>
-          </div>
-
-          <footer className="console-footer">
-            <span>Non-production preview · Scenario fixture only</span>
-            <span>Contract <strong>v1</strong> · Primary region · UTC 08:42:16</span>
-          </footer>
-        </div>
-      </main>
-    </div>
+        </main>
+      </div>
+    </MotionConfig>
   );
 }

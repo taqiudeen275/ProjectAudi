@@ -29,6 +29,7 @@ Read the documents in order for full context. A specialized document may add det
 | [05 — Plans, Credits, Coins, and Commerce](05-plans-credits-coins-commerce.md) | Plan entitlements, Studio Credit accounting, Reader Coin lots, pricing and transaction semantics, marketplace economics, creator earnings, refunds, chargebacks, and reconciliation. This is the monetary and entitlement source of truth. |
 | [06 — Trust, Safety, and Publishing](06-trust-safety-publishing.md) | Voice-consent tiers, prohibited content and identities, rights attestations, provenance, automated and human review, publishing states, reports, takedowns, appeals, privacy, and data-handling controls. This is the safety and publishing-policy source of truth. |
 | [07 — Roadmap, Quality, and Acceptance](07-roadmap-quality-acceptance.md) | Delivery sequence, acceptance matrix, model and audio quality gates, test strategy, operational readiness, launch gates, rollout, monitoring, and post-launch criteria. This is the execution and release source of truth. |
+| [08 — Interface Design System](08-interface-design-system.md) | Quiet-interface principles, visual hierarchy, action and border budgets, product-specific layouts, semantic tokens, source-owned components, motion choreography, Canvas UI limits, accessibility, performance, and review checks. This is the implementation-level visual and interaction source of truth. |
 
 ## Decision and change discipline
 

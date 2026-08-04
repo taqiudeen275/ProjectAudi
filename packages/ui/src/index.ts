@@ -1,33 +1,40 @@
 export const productSurfaces = {
   studio: {
     name: "AudiLink Studio",
-    character: "Precise creative workstation",
-    accent: "#9ff55b",
+    character: "Quiet precision for creative work",
+    accent: "#a7f36b",
   },
   books: {
     name: "AudiLink Books",
-    character: "Warm cinematic listening",
-    accent: "#ffb45a",
+    character: "Editorial warmth for listening",
+    accent: "#f5b56b",
   },
   admin: {
     name: "AudiLink Admin",
-    character: "Calm operational control",
-    accent: "#5ee7d5",
+    character: "Quiet operational focus",
+    accent: "#72d9ca",
   },
 } as const;
 
 export const sharedColorTokens = {
-  ink: "#070a0c",
-  panel: "#0e1316",
-  panelRaised: "#141a1e",
-  line: "#263036",
+  canvas: "#080b0d",
+  surface: "#0e1316",
+  surfaceRaised: "#151b1f",
+  surfaceSubtle: "#1a2125",
+  separator: "#283136",
   text: "#f4f7f5",
-  textMuted: "#909b9d",
-  signal: "#5ee7d5",
-  positive: "#9ff55b",
+  textMuted: "#9aa4a5",
+  focus: "#72d9ca",
+  positive: "#a7f36b",
   caution: "#ffbf69",
   danger: "#ff7262",
   info: "#7aaeff",
+  // Compatibility aliases. Prefer the semantic roles above in new UI.
+  ink: "#080b0d",
+  panel: "#0e1316",
+  panelRaised: "#151b1f",
+  line: "#283136",
+  signal: "#72d9ca",
 } as const;
 
 export const sharedSpaceTokens = {
@@ -43,10 +50,44 @@ export const sharedSpaceTokens = {
 } as const;
 
 export const sharedRadiusTokens = {
-  small: "0.5rem",
-  medium: "0.75rem",
-  large: "1rem",
+  control: "0.625rem",
+  surface: "1.125rem",
+  small: "0.625rem",
+  medium: "0.875rem",
+  large: "1.125rem",
   pill: "999px",
+} as const;
+
+export const sharedMotionTokens = {
+  duration: {
+    instant: 0,
+    feedback: 140,
+    state: 220,
+    view: 340,
+    reduced: 80,
+  },
+  easing: {
+    standard: [0.22, 1, 0.36, 1],
+    enter: [0.16, 1, 0.3, 1],
+    exit: [0.7, 0, 0.84, 0],
+  },
+  directManipulation: {
+    type: "spring",
+    stiffness: 420,
+    damping: 38,
+    mass: 0.8,
+  },
+  maxWorkspaceScaleDelta: 0.02,
+  maxEntranceStaggerMs: 120,
+} as const;
+
+export const interfacePrinciples = {
+  dominantTasksPerViewport: 1,
+  adjacentSecondaryActions: 1,
+  defaultSectionSurface: false,
+  maxActiveCanvasEffects: 1,
+  minimumTouchTargetPx: 44,
+  reducedMotionCanvasEnabled: false,
 } as const;
 
 export type StatusTone = "neutral" | "positive" | "caution" | "danger" | "info";

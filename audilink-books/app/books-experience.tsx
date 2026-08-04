@@ -1,8 +1,9 @@
 "use client";
 
+import { AnimatePresence, MotionConfig, motion, useReducedMotion } from "motion/react";
 import { useEffect, useMemo, useRef, useState } from "react";
 
-import type { Book, ContinueItem, CoverTone } from "./books-data";
+import type { Book, ContinueItem } from "./books-data";
 
 type BooksExperienceProps = {
   featured: Book;
@@ -14,27 +15,16 @@ type BooksExperienceProps = {
 type IconName =
   | "arrow"
   | "back15"
-  | "bell"
   | "bookmark"
   | "check"
   | "chevron"
   | "close"
   | "coin"
-  | "compass"
-  | "download"
   | "forward15"
-  | "grid"
   | "headphones"
-  | "home"
-  | "library"
-  | "list"
-  | "more"
-  | "next"
   | "pause"
   | "play"
-  | "previous"
   | "search"
-  | "sparkles"
   | "user"
   | "volume";
 
@@ -50,7 +40,7 @@ const categories = [
 type Category = (typeof categories)[number];
 
 function Icon({ name, size = 20 }: { name: IconName; size?: number }) {
-  const content: Record<IconName, React.ReactNode> = {
+  const paths: Record<IconName, React.ReactNode> = {
     arrow: (
       <>
         <path d="M5 12h14" />
@@ -59,21 +49,14 @@ function Icon({ name, size = 20 }: { name: IconName; size?: number }) {
     ),
     back15: (
       <>
-        <path d="M4.9 7.5H9V3.4" />
-        <path d="M5.1 7.2a8 8 0 1 1-1 6.5" />
-        <path d="M9.2 11.2v5.1" />
-        <path d="M12.2 12.1c.4-.7 1.1-1 1.8-1 .9 0 1.7.5 1.7 1.4 0 1.1-.8 1.4-1.6 1.4h-.5 0c1.4-.1 2.4.2 2.4 1.4 0 1-.8 1.7-2 1.7-.9 0-1.6-.4-2-1" />
+        <path d="M5 7.5h4V3.6" />
+        <path d="M5.2 7.2a8 8 0 1 1-1 6.5" />
+        <path d="M9.4 11.2v5.2M12.3 12.2c.4-.7 1.1-1 1.8-1 .9 0 1.7.5 1.7 1.4 0 1.1-.8 1.4-2.1 1.4 1.5-.1 2.4.3 2.4 1.4 0 1-.8 1.7-2 1.7-.9 0-1.6-.4-2-1" />
       </>
     ),
-    bell: (
-      <>
-        <path d="M18 8a6 6 0 0 0-12 0c0 7-3 7-3 9h18c0-2-3-2-3-9" />
-        <path d="M10 21h4" />
-      </>
-    ),
-    bookmark: <path d="M6 3h12v18l-6-4-6 4V3Z" />,
+    bookmark: <path d="M6.5 3.5h11v17l-5.5-3.7-5.5 3.7v-17Z" />,
     check: <path d="m5 12 4 4L19 6" />,
-    chevron: <path d="m7 9 5 5 5-5" />,
+    chevron: <path d="m8 10 4 4 4-4" />,
     close: (
       <>
         <path d="m6 6 12 12" />
@@ -83,79 +66,20 @@ function Icon({ name, size = 20 }: { name: IconName; size?: number }) {
     coin: (
       <>
         <circle cx="12" cy="12" r="8.5" />
-        <path d="M9.3 9.4c.5-.8 1.5-1.3 2.8-1.3 1.6 0 2.8.8 2.8 2 0 3.2-5.8 1.2-5.8 4.3 0 1.1 1.2 1.9 2.9 1.9 1.4 0 2.5-.5 3.1-1.4" />
-        <path d="M12 6.4v11.2" />
-      </>
-    ),
-    compass: (
-      <>
-        <circle cx="12" cy="12" r="9" />
-        <path d="m15.8 8.2-2.2 5.4-5.4 2.2 2.2-5.4 5.4-2.2Z" />
-      </>
-    ),
-    download: (
-      <>
-        <path d="M12 3v12" />
-        <path d="m7 10 5 5 5-5" />
-        <path d="M5 21h14" />
+        <path d="M9.2 9.5c.6-.9 1.6-1.4 2.9-1.4 1.7 0 2.8.8 2.8 2.1 0 3.1-5.8 1.1-5.8 4.2 0 1.2 1.2 2 2.9 2 1.4 0 2.6-.5 3.2-1.5M12 6.4v11.2" />
       </>
     ),
     forward15: (
       <>
-        <path d="M19.1 7.5H15V3.4" />
-        <path d="M18.9 7.2a8 8 0 1 0 1 6.5" />
-        <path d="M8.2 11.2v5.1" />
-        <path d="M11.2 12.1c.4-.7 1.1-1 1.8-1 .9 0 1.7.5 1.7 1.4 0 1.1-.8 1.4-1.6 1.4h-.5 0c1.4-.1 2.4.2 2.4 1.4 0 1-.8 1.7-2 1.7-.9 0-1.6-.4-2-1" />
-      </>
-    ),
-    grid: (
-      <>
-        <rect x="4" y="4" width="6" height="6" rx="1" />
-        <rect x="14" y="4" width="6" height="6" rx="1" />
-        <rect x="4" y="14" width="6" height="6" rx="1" />
-        <rect x="14" y="14" width="6" height="6" rx="1" />
+        <path d="M19 7.5h-4V3.6" />
+        <path d="M18.8 7.2a8 8 0 1 0 1 6.5" />
+        <path d="M8.4 11.2v5.2M11.3 12.2c.4-.7 1.1-1 1.8-1 .9 0 1.7.5 1.7 1.4 0 1.1-.8 1.4-2.1 1.4 1.5-.1 2.4.3 2.4 1.4 0 1-.8 1.7-2 1.7-.9 0-1.6-.4-2-1" />
       </>
     ),
     headphones: (
       <>
         <path d="M4 14v-2a8 8 0 0 1 16 0v2" />
-        <path d="M4 14h3v6H5a1 1 0 0 1-1-1v-5Z" />
-        <path d="M20 14h-3v6h2a1 1 0 0 0 1-1v-5Z" />
-      </>
-    ),
-    home: (
-      <>
-        <path d="m3 11 9-8 9 8" />
-        <path d="M5 10v10h14V10" />
-        <path d="M9 20v-6h6v6" />
-      </>
-    ),
-    library: (
-      <>
-        <path d="M4 4h5v16H4z" />
-        <path d="M10 4h5v16h-5z" />
-        <path d="m16 5 4-1 2 15-4 1-2-15Z" />
-      </>
-    ),
-    list: (
-      <>
-        <path d="M8 6h12" />
-        <path d="M8 12h12" />
-        <path d="M8 18h12" />
-        <path d="M4 6h.01M4 12h.01M4 18h.01" />
-      </>
-    ),
-    more: (
-      <>
-        <circle cx="5" cy="12" r="1" fill="currentColor" stroke="none" />
-        <circle cx="12" cy="12" r="1" fill="currentColor" stroke="none" />
-        <circle cx="19" cy="12" r="1" fill="currentColor" stroke="none" />
-      </>
-    ),
-    next: (
-      <>
-        <path d="m8 5 8 7-8 7V5Z" />
-        <path d="M18 5v14" />
+        <path d="M4 14h3v6H5a1 1 0 0 1-1-1v-5ZM20 14h-3v6h2a1 1 0 0 0 1-1v-5Z" />
       </>
     ),
     pause: (
@@ -165,23 +89,10 @@ function Icon({ name, size = 20 }: { name: IconName; size?: number }) {
       </>
     ),
     play: <path d="m9 6 9 6-9 6V6Z" />,
-    previous: (
-      <>
-        <path d="m16 5-8 7 8 7V5Z" />
-        <path d="M6 5v14" />
-      </>
-    ),
     search: (
       <>
         <circle cx="11" cy="11" r="7" />
         <path d="m16 16 4.5 4.5" />
-      </>
-    ),
-    sparkles: (
-      <>
-        <path d="m12 3 1.2 3.8L17 8l-3.8 1.2L12 13l-1.2-3.8L7 8l3.8-1.2L12 3Z" />
-        <path d="m5 14 .8 2.2L8 17l-2.2.8L5 20l-.8-2.2L2 17l2.2-.8L5 14Z" />
-        <path d="m19 13 .6 1.4L21 15l-1.4.6L19 17l-.6-1.4L17 15l1.4-.6L19 13Z" />
       </>
     ),
     user: (
@@ -193,8 +104,7 @@ function Icon({ name, size = 20 }: { name: IconName; size?: number }) {
     volume: (
       <>
         <path d="M5 10v4h4l5 4V6l-5 4H5Z" />
-        <path d="M17 9a4 4 0 0 1 0 6" />
-        <path d="M19.5 6.5a8 8 0 0 1 0 11" />
+        <path d="M17 9a4 4 0 0 1 0 6M19.5 6.5a8 8 0 0 1 0 11" />
       </>
     ),
   };
@@ -212,9 +122,9 @@ function Icon({ name, size = 20 }: { name: IconName; size?: number }) {
         stroke="currentColor"
         strokeLinecap="round"
         strokeLinejoin="round"
-        strokeWidth="1.8"
+        strokeWidth="1.75"
       >
-        {content[name]}
+        {paths[name]}
       </g>
     </svg>
   );
@@ -223,82 +133,66 @@ function Icon({ name, size = 20 }: { name: IconName; size?: number }) {
 function BrandMark() {
   return (
     <span aria-hidden="true" className="brand-mark">
-      <svg fill="none" viewBox="0 0 32 32">
-        <path d="M5 18.5c2.4 0 2.4-5 4.8-5s2.4 8 4.8 8 2.4-13 4.8-13 2.4 9 4.8 9H27" />
-        <path d="M16 4.5a11.5 11.5 0 1 0 0 23 11.5 11.5 0 0 0 0-23Z" />
-      </svg>
+      <i />
+      <i />
+      <i />
+      <i />
     </span>
   );
 }
 
 function Cover({
-  tone,
-  title,
+  book,
   compact = false,
 }: {
-  tone: CoverTone;
-  title: string;
+  book: Pick<Book, "cover" | "title" | "format">;
   compact?: boolean;
 }) {
-  const words = title.split(" ");
-  const shortTitle = words.length > 4 ? words.slice(0, 4).join(" ") : title;
-
   return (
     <div
-      aria-hidden="true"
-      className={`book-cover cover-${tone}${compact ? " book-cover-compact" : ""}`}
+      aria-label={`${book.title} cover`}
+      className={`book-cover cover-${book.cover}${compact ? " book-cover-compact" : ""}`}
+      role="img"
     >
       <span className="cover-kicker">AudiLink original</span>
-      <span className="cover-glyph">
+      <span className="cover-glyph" aria-hidden="true">
         <i />
         <i />
         <i />
       </span>
-      <span className="cover-title">{shortTitle}</span>
-      <span className="cover-rule" />
+      <strong className="cover-title">{book.title}</strong>
+      <span className="cover-rule">{book.format === "Serial" ? "An audio serial" : "An audio story"}</span>
     </div>
   );
 }
 
-function PriceLabel({ book }: { book: Book }) {
+function ProvenanceBadge({ book, compact = false }: { book: Book; compact?: boolean }) {
+  const disclosure = book.provenance.disclosures.length
+    ? ` Disclosures: ${book.provenance.disclosures.join(", ")}.`
+    : " No AI narration disclosures.";
+
   return (
-    <span className={book.price === "free" ? "price price-free" : "price"}>
-      {book.price === "free" ? (
-        "Free"
-      ) : (
-        <>
-          <Icon name="coin" size={14} />
-          {book.price} Reader Coins{book.format === "Serial" ? " · episode" : ""}
-        </>
-      )}
+    <span
+      aria-label={`${book.provenance.label}.${disclosure}`}
+      className={`provenance-label${compact ? " provenance-label-compact" : ""}`}
+      data-narration={book.provenance.narration}
+      title={`${book.provenance.label}.${disclosure}`}
+    >
+      <span aria-hidden="true" />
+      {book.provenance.label}
     </span>
   );
 }
 
-function ProvenanceBadge({
-  book,
-  compact = false,
-}: {
-  book: Book;
-  compact?: boolean;
-}) {
-  const disclosureDetail = book.provenance.disclosures.length
-    ? `${book.provenance.disclosures.length} AI provenance ${
-        book.provenance.disclosures.length === 1 ? "label" : "labels"
-      } recorded`
-    : "No AI narration disclosure labels";
+function Price({ book }: { book: Book }) {
+  if (book.price === "free") {
+    return <span className="story-price price-free">Free</span>;
+  }
 
   return (
-    <span
-      className={`provenance-label${compact ? " provenance-label-compact" : ""}`}
-      data-narration={book.provenance.narration}
-      title={disclosureDetail}
-    >
-      <Icon
-        name={book.provenance.narration === "human" ? "user" : "sparkles"}
-        size={compact ? 12 : 13}
-      />
-      <span>{book.provenance.label}</span>
+    <span className="story-price">
+      <Icon name="coin" size={13} />
+      {book.price}
     </span>
   );
 }
@@ -308,522 +202,339 @@ function SectionHeading({
   eyebrow,
   title,
   copy,
-  action,
+  children,
 }: {
   id?: string;
   eyebrow: string;
   title: string;
   copy?: string;
-  action?: React.ReactNode;
+  children?: React.ReactNode;
 }) {
   return (
     <div className="section-heading">
       <div>
-        <p className="section-eyebrow">{eyebrow}</p>
+        <p className="eyebrow">{eyebrow}</p>
         <h2 id={id}>{title}</h2>
         {copy ? <p className="section-copy">{copy}</p> : null}
       </div>
-      {action ? <div className="section-action">{action}</div> : null}
+      {children ? <div className="section-tools">{children}</div> : null}
     </div>
   );
 }
 
-function ContinueCard({
-  book,
-  isActive,
-  isPlaying,
+function ResumeCard({
+  item,
   onPlay,
 }: {
-  book: ContinueItem;
-  isActive: boolean;
-  isPlaying: boolean;
-  onPlay: (book: Book, progress: number) => void;
+  item: ContinueItem;
+  onPlay: (book: Book) => void;
 }) {
-  const activeAndPlaying = isActive && isPlaying;
-
   return (
-    <article className="continue-card">
-      <div className="continue-cover">
-        <Cover compact title={book.title} tone={book.cover} />
-        <button
-          aria-label={`${activeAndPlaying ? "Pause" : "Resume"} ${book.title}`}
-          className="cover-play-button"
-          onClick={() => onPlay(book, book.progress)}
-          type="button"
+    <article className="resume-card">
+      <button
+        aria-label={`Resume ${item.title}`}
+        className="resume-cover-button"
+        onClick={() => onPlay(item)}
+        type="button"
+      >
+        <Cover book={item} compact />
+        <span className="cover-play"><Icon name="play" size={17} /></span>
+      </button>
+      <div className="resume-copy">
+        <p className="resume-label">Continue · {item.remaining}</p>
+        <h3>{item.title}</h3>
+        <p>{item.currentUnit}</p>
+        <ProvenanceBadge book={item} compact />
+        <div
+          aria-label={`${item.progress}% complete`}
+          aria-valuemax={100}
+          aria-valuemin={0}
+          aria-valuenow={item.progress}
+          className="resume-progress"
+          role="progressbar"
         >
-          <Icon name={activeAndPlaying ? "pause" : "play"} size={20} />
-        </button>
-      </div>
-      <div className="continue-copy">
-        <span className="continue-label">Continue listening</span>
-        <h3>{book.title}</h3>
-        <p>{book.creator}</p>
-        <ProvenanceBadge book={book} compact />
-        <p className="current-unit">{book.currentUnit}</p>
-        <div className="card-progress" aria-hidden="true">
-          <span style={{ width: `${book.progress}%` }} />
-        </div>
-        <div className="progress-meta">
-          <span>{book.progress}% complete</span>
-          <span>{book.remaining}</span>
+          <span style={{ width: `${item.progress}%` }} />
         </div>
       </div>
+      <button
+        aria-label={`Resume ${item.title}`}
+        className="quiet-icon-button resume-action"
+        onClick={() => onPlay(item)}
+        type="button"
+      >
+        <Icon name="play" size={18} />
+      </button>
     </article>
   );
 }
 
-function BookCard({
+function StoryCard({
   book,
   saved,
-  isActive,
-  isPlaying,
-  onSave,
   onPlay,
+  onSave,
+  onUnlock,
 }: {
   book: Book;
   saved: boolean;
-  isActive: boolean;
-  isPlaying: boolean;
-  onSave: (book: Book) => void;
   onPlay: (book: Book) => void;
+  onSave: (book: Book) => void;
+  onUnlock: (book: Book) => void;
 }) {
-  const activeAndPlaying = isActive && isPlaying;
-
   return (
-    <article className="book-card">
-      <div className="book-card-art">
-        <Cover title={book.title} tone={book.cover} />
+    <motion.article className="story-card" layout>
+      <div className="story-art">
+        <Cover book={book} />
         <button
-          aria-label={`${saved ? "Remove" : "Save"} ${book.title} ${
-            saved ? "from" : "to"
-          } Saved`}
-          aria-pressed={saved}
-          className={`save-button${saved ? " is-saved" : ""}`}
-          onClick={() => onSave(book)}
-          type="button"
-        >
-          <Icon name={saved ? "check" : "bookmark"} size={18} />
-        </button>
-        <button
-          aria-label={`${activeAndPlaying ? "Pause" : "Play preview of"} ${
-            book.title
-          }`}
-          className="card-play-button"
+          aria-label={`Play ${book.price === "free" ? "" : "a preview of "}${book.title}`}
+          className="story-play"
           onClick={() => onPlay(book)}
           type="button"
         >
-          <Icon name={activeAndPlaying ? "pause" : "play"} size={22} />
+          <Icon name="play" size={20} />
+        </button>
+        <button
+          aria-label={`${saved ? "Remove" : "Save"} ${book.title}`}
+          aria-pressed={saved}
+          className="story-save"
+          data-saved={saved}
+          onClick={() => onSave(book)}
+          type="button"
+        >
+          <Icon name={saved ? "check" : "bookmark"} size={17} />
         </button>
       </div>
-      <div className="book-card-copy">
-        <div className="book-card-topline">
+      <div className="story-copy">
+        <div className="story-kicker">
           <span>{book.eyebrow ?? book.category}</span>
-          <span>{book.format}</span>
+          <span>{book.duration}</span>
         </div>
         <h3>{book.title}</h3>
-        <p className="book-creator">{book.creator}</p>
-        {book.episode ? <p className="episode-label">{book.episode}</p> : null}
-        <div className="book-card-bottom">
-          <PriceLabel book={book} />
-          <span className="duration">{book.duration}</span>
-        </div>
-        <ProvenanceBadge book={book} />
-      </div>
-    </article>
-  );
-}
-
-function SerialCard({
-  book,
-  saved,
-  isActive,
-  isPlaying,
-  onSave,
-  onPlay,
-}: {
-  book: Book;
-  saved: boolean;
-  isActive: boolean;
-  isPlaying: boolean;
-  onSave: (book: Book) => void;
-  onPlay: (book: Book) => void;
-}) {
-  const activeAndPlaying = isActive && isPlaying;
-
-  return (
-    <article className="serial-card">
-      <div className="serial-cover-wrap">
-        <Cover compact title={book.title} tone={book.cover} />
-      </div>
-      <div className="serial-copy">
-        <div className="serial-topline">
-          <span>{book.eyebrow}</span>
-          <button
-            aria-label={`${saved ? "Remove" : "Save"} ${book.title} ${
-              saved ? "from" : "to"
-            } Saved`}
-            aria-pressed={saved}
-            className={`text-save-button${saved ? " is-saved" : ""}`}
-            onClick={() => onSave(book)}
-            type="button"
-          >
-            <Icon name={saved ? "check" : "bookmark"} size={16} />
-            {saved ? "Saved" : "Save"}
-          </button>
-        </div>
-        <h3>{book.title}</h3>
-        <p className="book-creator">{book.creator}</p>
+        <p className="story-creator">by {book.creator}</p>
         <ProvenanceBadge book={book} compact />
-        <p className="serial-description">{book.description}</p>
-        <p className="episode-label">{book.episode}</p>
-        <div className="serial-actions">
+        <div className="story-bottom">
           <button
-            className="small-play-button"
-            onClick={() => onPlay(book)}
+            className="price-action"
+            onClick={() => (book.price === "free" ? onPlay(book) : onUnlock(book))}
             type="button"
           >
-            <Icon name={activeAndPlaying ? "pause" : "play"} size={17} />
-            {activeAndPlaying ? "Pause" : "Preview"}
+            <Price book={book} />
+            <span>{book.price === "free" ? "Listen" : "Unlock"}</span>
           </button>
-          <PriceLabel book={book} />
+          <button className="preview-link" onClick={() => onPlay(book)} type="button">
+            {book.price === "free" ? "Play" : `${Math.floor(book.previewDurationSeconds / 60)} min preview`}
+          </button>
         </div>
       </div>
-    </article>
+    </motion.article>
   );
 }
 
 function UnlockDialog({
-  open,
   book,
   balance,
   onClose,
-  onConfirm,
+  onPreviewCheckout,
 }: {
-  open: boolean;
-  book: Book;
+  book: Book | null;
   balance: number;
   onClose: () => void;
-  onConfirm: () => void;
+  onPreviewCheckout: (book: Book) => void;
 }) {
   const dialogRef = useRef<HTMLDialogElement>(null);
-  const isFree = book.price === "free";
-  const coinPrice = book.price === "free" ? 0 : book.price;
-  const shortfall = Math.max(0, coinPrice - balance);
-  const canPreview = isFree || shortfall === 0;
+  const previousFocusRef = useRef<HTMLElement | null>(null);
 
   useEffect(() => {
     const dialog = dialogRef.current;
     if (!dialog) return;
 
-    if (open && !dialog.open) dialog.showModal();
-    if (!open && dialog.open) dialog.close();
-  }, [open]);
+    if (book && !dialog.open) {
+      previousFocusRef.current = document.activeElement as HTMLElement | null;
+      dialog.showModal();
+    } else if (!book && dialog.open) {
+      dialog.close();
+    }
+  }, [book]);
+
+  const dismiss = () => dialogRef.current?.close();
+  const price = book && book.price !== "free" ? book.price : 0;
+  const canAfford = price <= balance;
+  const shortfall = Math.max(0, price - balance);
 
   return (
     <dialog
-      aria-describedby="interaction-preview-note"
-      aria-labelledby="unlock-dialog-title"
+      aria-labelledby="unlock-title"
       className="unlock-dialog"
-      onCancel={onClose}
-      onClick={(event) => {
-        if (event.target === event.currentTarget) onClose();
+      onCancel={(event) => {
+        event.preventDefault();
+        dismiss();
       }}
-      onClose={onClose}
+      onClick={(event) => {
+        if (event.target === event.currentTarget) dismiss();
+      }}
+      onClose={() => {
+        onClose();
+        window.requestAnimationFrame(() => previousFocusRef.current?.focus());
+      }}
       ref={dialogRef}
     >
-      <div className="dialog-content">
-        <div className="dialog-heading">
-          <div className="dialog-icon">
-            <Icon name={isFree ? "library" : "coin"} size={24} />
-          </div>
-          <button
-            aria-label="Close unlock confirmation"
-            className="icon-button"
-            onClick={onClose}
-            type="button"
-          >
-            <Icon name="close" />
+      {book ? (
+        <div className="dialog-content">
+          <button autoFocus aria-label="Close unlock preview" className="dialog-close" onClick={dismiss} type="button">
+            <Icon name="close" size={19} />
           </button>
-        </div>
-        <div className="interaction-preview-notice" id="interaction-preview-note">
-          <strong>Interaction preview</strong>
-          <span>No charge · no entitlement · no account changes</span>
-        </div>
-        <p className="section-eyebrow">
-          {isFree ? "Free Library flow" : "Reader Coin unlock flow"}
-        </p>
-        <h2 id="unlock-dialog-title">
-          Preview {isFree ? "adding" : "unlocking"} {book.title}?
-        </h2>
-        <p className="dialog-description">
-          This front-end milestone demonstrates the future confirmation flow.
-          It does not contact AudiLink wallet or entitlement services, change
-          your balance, or add this title to your real Library.
-        </p>
-
-        <div className="unlock-scope">
-          <Cover compact title={book.title} tone={book.cover} />
-          <div>
-            <span>Planned access scope</span>
-            <strong>Complete audiobook</strong>
-            <small>{book.duration} · all chapters</small>
-          </div>
-        </div>
-
-        <dl className="coin-breakdown">
-          <div>
-            <dt>Current balance</dt>
-            <dd>{balance} Reader Coins</dd>
-          </div>
-          <div>
-            <dt>{isFree ? "Planned access price" : "Planned unlock price"}</dt>
-            <dd>{isFree ? "Free" : `${coinPrice} Reader Coins`}</dd>
-          </div>
-          {shortfall > 0 ? (
-            <div className="coin-shortfall">
-              <dt>Reader Coin shortfall</dt>
-              <dd>{shortfall} Reader Coins</dd>
+          <p className="eyebrow">Interaction preview</p>
+          <h2 id="unlock-title">Preview the Reader Coin flow</h2>
+          <p className="dialog-description">
+            See how a permanent unlock will work without charging coins or creating an entitlement.
+          </p>
+          <div className="dialog-book">
+            <Cover book={book} compact />
+            <div>
+              <strong>{book.title}</strong>
+              <span>Complete {book.format.toLowerCase()} · permanent production unlock</span>
+              <ProvenanceBadge book={book} compact />
             </div>
-          ) : null}
-          <div className="coin-result">
-            <dt>Balance after this preview</dt>
-            <dd>{balance} Reader Coins · unchanged</dd>
           </div>
-        </dl>
-
-        <p className="dialog-note">
-          {isFree
-            ? "Free titles do not spend Reader Coins. The production flow will still create and verify a Library entitlement."
-            : shortfall > 0
-            ? `You need ${shortfall} more Reader Coins before the real unlock flow can continue.`
-            : "Purchased Reader Coins never expire. A production unlock will show the exact lots used before you confirm."}
-        </p>
-
-        <div className="dialog-actions">
-          <button className="secondary-button" onClick={onClose} type="button">
-            Not now
-          </button>
-          <button
-            className="primary-button"
-            disabled={!canPreview}
-            onClick={onConfirm}
-            type="button"
-          >
-            <Icon name={isFree ? "library" : "coin"} size={17} />
-            {shortfall > 0
-              ? `Need ${shortfall} more Reader Coins`
-              : isFree
-                ? "Preview Add free to Library"
-                : `Preview unlock for ${coinPrice} Reader Coins`}
-          </button>
-        </div>
-      </div>
-    </dialog>
-  );
-}
-
-function PersistentPlayer({
-  book,
-  progress,
-  playing,
-  preview,
-  maxProgress,
-  speed,
-  onProgress,
-  onToggle,
-  onSeek,
-  onSpeed,
-}: {
-  book: Book;
-  progress: number;
-  playing: boolean;
-  preview: boolean;
-  maxProgress: number;
-  speed: number;
-  onProgress: (value: number) => void;
-  onToggle: () => void;
-  onSeek: (amount: number) => void;
-  onSpeed: () => void;
-}) {
-  const [muted, setMuted] = useState(false);
-  const [queueOpen, setQueueOpen] = useState(false);
-  const bookDurationSeconds = durationToSeconds(book.duration);
-  const playbackDurationSeconds = preview
-    ? Math.min(book.previewDurationSeconds, bookDurationSeconds)
-    : bookDurationSeconds;
-  const elapsed = Math.min(
-    Math.round((progress / 100) * bookDurationSeconds),
-    playbackDurationSeconds,
-  );
-  const visualProgress = Math.min(
-    100,
-    maxProgress > 0 ? (progress / maxProgress) * 100 : 0,
-  );
-  const currentLabel = preview
-    ? `Preview · ${formatClock(playbackDurationSeconds)}`
-    : book.episode ??
-      ("currentUnit" in book && typeof book.currentUnit === "string"
-        ? book.currentUnit
-        : "Full audiobook");
-
-  return (
-    <aside
-      aria-label="Audio player"
-      className={`persistent-player${playing ? " is-playing" : ""}`}
-    >
-      <div className="player-inner">
-        <div className="player-book">
-          <Cover compact title={book.title} tone={book.cover} />
-          <div className="player-title-wrap">
-            <span className="player-status">
-              {playing ? "Now playing" : "Ready to listen"}
-            </span>
-            <strong>{book.title}</strong>
-            <span className="player-unit">{currentLabel}</span>
-            <ProvenanceBadge book={book} compact />
-          </div>
-        </div>
-
-        <div className="player-center">
-          <div className="player-controls">
+          <dl className="coin-summary">
+            <div><dt>Your balance</dt><dd>{balance} coins</dd></div>
+            <div><dt>Illustrative price</dt><dd>{price} coins</dd></div>
+            <div className={canAfford ? "coin-result" : "coin-shortfall"}>
+              <dt>{canAfford ? "Balance after a real purchase" : "Shortfall"}</dt>
+              <dd>{canAfford ? Math.max(0, balance - price) : shortfall} coins</dd>
+            </div>
+          </dl>
+          <p className="dialog-safety">
+            Production checkout must settle the Reader Coin ledger on the server before issuing a permanent entitlement. This preview does neither.
+          </p>
+          <div className="dialog-actions">
+            <button className="text-button" onClick={dismiss} type="button">Not now</button>
             <button
-              aria-label="Previous chapter"
-              className="player-icon"
-              disabled={preview}
-              onClick={() => onProgress(Math.max(0, progress - 8))}
-              type="button"
-            >
-              <Icon name="previous" size={19} />
-            </button>
-            <button
-              aria-label="Go back 15 seconds"
-              className="player-icon player-seek-button"
-              onClick={() => onSeek(-15)}
-              type="button"
-            >
-              <Icon name="back15" size={21} />
-            </button>
-            <button
-              aria-label={playing ? "Pause" : "Play"}
-              className="player-play"
-              onClick={onToggle}
-              type="button"
-            >
-              <Icon name={playing ? "pause" : "play"} size={22} />
-            </button>
-            <button
-              aria-label="Go forward 15 seconds"
-              className="player-icon player-seek-button"
-              onClick={() => onSeek(15)}
-              type="button"
-            >
-              <Icon name="forward15" size={21} />
-            </button>
-            <button
-              aria-label="Next chapter"
-              className="player-icon"
-              disabled={preview}
-              onClick={() => onProgress(Math.min(maxProgress, progress + 8))}
-              type="button"
-            >
-              <Icon name="next" size={19} />
-            </button>
-          </div>
-          <div className="player-timeline">
-            <span>{formatClock(elapsed)}</span>
-            <input
-              aria-label={preview ? "Preview playback position" : "Playback position"}
-              aria-valuetext={`${formatClock(elapsed)} of ${formatClock(
-                playbackDurationSeconds,
-              )}${preview ? " preview" : ""}`}
-              max={maxProgress}
-              min="0"
-              onChange={(event) => onProgress(Number(event.target.value))}
-              step="0.01"
-              style={{
-                background: `linear-gradient(to right, var(--amber) 0%, var(--amber) ${visualProgress}%, var(--track) ${visualProgress}%, var(--track) 100%)`,
+              className="primary-button"
+              disabled={!canAfford}
+              onClick={() => {
+                onPreviewCheckout(book);
+                dismiss();
               }}
-              type="range"
-              value={progress}
-            />
-            <span>
-              −{formatClock(Math.max(playbackDurationSeconds - elapsed, 0))}
-            </span>
+              type="button"
+            >
+              {canAfford ? "Preview purchase flow" : `Need ${shortfall} more coins`}
+            </button>
           </div>
         </div>
-
-        <div className="player-extras">
-          <div aria-hidden="true" className="mini-waveform">
-            {[7, 13, 9, 18, 12, 21, 10, 16, 8, 14].map((height, index) => (
-              <i key={index} style={{ height }} />
-            ))}
-          </div>
-          <button
-            aria-label={`Playback speed ${speed} times. Change speed`}
-            className="speed-button"
-            onClick={onSpeed}
-            type="button"
-          >
-            {speed}×
-          </button>
-          <button
-            aria-label={muted ? "Unmute" : "Mute"}
-            aria-pressed={muted}
-            className={`player-icon${muted ? " is-muted" : ""}`}
-            onClick={() => setMuted((current) => !current)}
-            type="button"
-          >
-            <Icon name="volume" size={20} />
-          </button>
-          <button
-            aria-controls="player-queue"
-            aria-expanded={!preview && queueOpen}
-            aria-label={
-              preview ? "Chapter queue unavailable during preview" : "Open chapter queue"
-            }
-            className="player-icon"
-            disabled={preview}
-            onClick={() => setQueueOpen((current) => !current)}
-            type="button"
-          >
-            <Icon name="list" size={20} />
-          </button>
-          {queueOpen && !preview ? (
-            <div className="player-queue" id="player-queue">
-              <span>Up next</span>
-              <strong>{book.format === "Serial" ? "Next episode" : "Next chapter"}</strong>
-              <small>Continue {book.title}</small>
-            </div>
-          ) : null}
-        </div>
-      </div>
-    </aside>
+      ) : null}
+    </dialog>
   );
 }
 
 function durationToSeconds(duration: string) {
   const hours = Number(duration.match(/(\d+)h/)?.[1] ?? 0);
-  const minutes = Number(duration.match(/(\d+)m/)?.[1] ?? 30);
-  return Math.max(hours * 3600 + minutes * 60, 60);
-}
-
-function previewProgressLimit(book: Book) {
-  const duration = durationToSeconds(book.duration);
-  return Math.min(100, (book.previewDurationSeconds / duration) * 100);
+  const minutes = Number(duration.match(/(\d+)m/)?.[1] ?? 0);
+  return Math.max(60, hours * 3600 + minutes * 60);
 }
 
 function formatClock(seconds: number) {
-  const hours = Math.floor(seconds / 3600);
-  const minutes = Math.floor((seconds % 3600) / 60);
-  const remainingSeconds = Math.floor(seconds % 60);
+  const safeSeconds = Math.max(0, Math.floor(seconds));
+  const hours = Math.floor(safeSeconds / 3600);
+  const minutes = Math.floor((safeSeconds % 3600) / 60);
+  const remainingSeconds = safeSeconds % 60;
+  return hours > 0
+    ? `${hours}:${String(minutes).padStart(2, "0")}:${String(remainingSeconds).padStart(2, "0")}`
+    : `${minutes}:${String(remainingSeconds).padStart(2, "0")}`;
+}
 
-  if (hours > 0) {
-    return `${hours}:${String(minutes).padStart(2, "0")}:${String(
-      remainingSeconds,
-    ).padStart(2, "0")}`;
-  }
+function PersistentPlayer({
+  book,
+  isPlaying,
+  isPreview,
+  muted,
+  progress,
+  speed,
+  total,
+  onPlayPause,
+  onSeek,
+  onSkip,
+  onSpeed,
+  onToggleMute,
+}: {
+  book: Book;
+  isPlaying: boolean;
+  isPreview: boolean;
+  muted: boolean;
+  progress: number;
+  speed: number;
+  total: number;
+  onPlayPause: () => void;
+  onSeek: (value: number) => void;
+  onSkip: (seconds: number) => void;
+  onSpeed: () => void;
+  onToggleMute: () => void;
+}) {
+  const prefersReducedMotion = useReducedMotion();
 
-  return `${minutes}:${String(remainingSeconds).padStart(2, "0")}`;
+  return (
+    <motion.aside
+      animate={{ opacity: 1, y: 0 }}
+      aria-label="Audio player"
+      className="persistent-player"
+      exit={prefersReducedMotion ? { opacity: 1, y: 0 } : { opacity: 0, y: 10 }}
+      initial={prefersReducedMotion ? false : { opacity: 0, y: 12 }}
+      transition={{ duration: prefersReducedMotion ? 0 : 0.24, ease: [0.22, 1, 0.36, 1] }}
+    >
+      <div className="player-inner">
+        <AnimatePresence initial={false} mode="wait">
+          <motion.div
+            animate={{ opacity: 1, y: 0 }}
+            className="player-story"
+            exit={{ opacity: 0, y: -5 }}
+            initial={prefersReducedMotion ? false : { opacity: 0, y: 5 }}
+            key={book.id}
+            transition={{ duration: prefersReducedMotion ? 0 : 0.2 }}
+          >
+            <Cover book={book} compact />
+            <div>
+              <span className="player-mode">{isPreview ? "Timed preview" : "In your library"}</span>
+              <strong>{book.title}</strong>
+              <span>{book.provenance.label}</span>
+            </div>
+          </motion.div>
+        </AnimatePresence>
+
+        <div className="player-transport">
+          <div className="player-buttons">
+            <button aria-label="Back 15 seconds" onClick={() => onSkip(-15)} type="button"><Icon name="back15" size={21} /></button>
+            <button aria-label={isPlaying ? "Pause" : "Play"} className="player-play" onClick={onPlayPause} type="button">
+              <Icon name={isPlaying ? "pause" : "play"} size={21} />
+            </button>
+            <button aria-label="Forward 15 seconds" onClick={() => onSkip(15)} type="button"><Icon name="forward15" size={21} /></button>
+          </div>
+          <div className="player-scrub">
+            <span>{formatClock(progress)}</span>
+            <input
+              aria-label={isPreview ? "Preview position" : "Playback position"}
+              aria-valuetext={`${formatClock(progress)} of ${formatClock(total)}`}
+              max={Math.max(1, total)}
+              min={0}
+              onChange={(event) => onSeek(Number(event.target.value))}
+              step={1}
+              type="range"
+              value={Math.min(progress, total)}
+            />
+            <span>{formatClock(total)}</span>
+          </div>
+        </div>
+
+        <div className="player-extras">
+          {isPreview ? <span className="preview-lock">Preview limit</span> : null}
+          <button aria-label={`Playback speed ${speed} times`} onClick={onSpeed} type="button">{speed}×</button>
+          <button aria-label={muted ? "Unmute" : "Mute"} aria-pressed={muted} onClick={onToggleMute} type="button">
+            <Icon name="volume" size={19} />
+            {muted ? <span className="muted-slash" /> : null}
+          </button>
+        </div>
+      </div>
+    </motion.aside>
+  );
 }
 
 export default function BooksExperience({
@@ -832,684 +543,430 @@ export default function BooksExperience({
   trending,
   serials,
 }: BooksExperienceProps) {
+  const prefersReducedMotion = useReducedMotion();
+  const searchRef = useRef<HTMLInputElement>(null);
+  const readerCoinBalance = 42;
   const initialBook = continueItems[0] ?? featured;
-  const initialProgress = continueItems[0]?.progress ?? 0;
-  const [query, setQuery] = useState("");
-  const [category, setCategory] = useState<Category>("All");
-  const [savedIds, setSavedIds] = useState(() => new Set(["quiet-bells"]));
+  const initialDuration = durationToSeconds(initialBook.duration);
+  const initialResumeItem = continueItems.find((item) => item.id === initialBook.id);
+  const initialProgress = initialResumeItem
+    ? initialDuration * (initialResumeItem.progress / 100)
+    : 0;
+
   const [activeBook, setActiveBook] = useState<Book>(initialBook);
-  const [playing, setPlaying] = useState(false);
-  const [playerProgress, setPlayerProgress] = useState(initialProgress);
-  const progressRef = useRef(initialProgress);
+  const [playerVisible, setPlayerVisible] = useState(false);
+  const [progress, setProgress] = useState(initialProgress);
+  const [isPlaying, setIsPlaying] = useState(false);
   const [speed, setSpeed] = useState(1);
-  const readerCoins = 240;
-  const [unlockOpen, setUnlockOpen] = useState(false);
-  const [featuredFlowPreviewed, setFeaturedFlowPreviewed] = useState(false);
+  const [muted, setMuted] = useState(false);
+  const [saved, setSaved] = useState<Set<string>>(new Set());
+  const [searchOpen, setSearchOpen] = useState(false);
+  const [filtersOpen, setFiltersOpen] = useState(false);
+  const [category, setCategory] = useState<Category>("All");
+  const [query, setQuery] = useState("");
+  const [showAll, setShowAll] = useState(false);
+  const [serialIndex, setSerialIndex] = useState(0);
+  const [unlockBook, setUnlockBook] = useState<Book | null>(null);
   const [announcement, setAnnouncement] = useState("");
 
-  const allBooks = useMemo(() => {
-    const unique = new Map<string, Book>();
-    [featured, ...continueItems, ...trending, ...serials].forEach((book) =>
-      unique.set(book.id, book),
-    );
-    return [...unique.values()];
-  }, [continueItems, featured, serials, trending]);
+  const hasEntitlement = (book: Book) =>
+    book.price === "free" || continueItems.some((item) => item.id === book.id);
+  const fullDuration = durationToSeconds(activeBook.duration);
+  const isPreview = !hasEntitlement(activeBook);
+  const playbackLimit = isPreview
+    ? Math.min(activeBook.previewDurationSeconds, fullDuration)
+    : fullDuration;
 
-  const normalizedQuery = query.trim().toLocaleLowerCase();
-  const searchResults = useMemo(() => {
-    if (!normalizedQuery) return [];
+  const allDiscoverable = useMemo(() => {
+    const byId = new Map<string, Book>();
+    [...trending, ...serials].forEach((book) => byId.set(book.id, book));
+    return [...byId.values()];
+  }, [serials, trending]);
 
-    return allBooks.filter((book) => {
-      const searchable = [
-        book.title,
-        book.creator,
-        book.category,
-        book.cast,
-        book.provenance.label,
-        book.description,
-      ]
-        .join(" ")
-        .toLocaleLowerCase();
-      return searchable.includes(normalizedQuery);
+  const filteredStories = useMemo(() => {
+    const normalized = query.trim().toLowerCase();
+    return allDiscoverable.filter((book) => {
+      const categoryMatch = category === "All" || book.category === category;
+      const searchMatch = !normalized || [book.title, book.creator, book.category, book.description]
+        .some((value) => value.toLowerCase().includes(normalized));
+      return categoryMatch && searchMatch;
     });
-  }, [allBooks, normalizedQuery]);
+  }, [allDiscoverable, category, query]);
 
-  const filteredTrending =
-    category === "All"
-      ? trending
-      : trending.filter((book) => book.category === category);
-  const filteredSerials =
-    category === "All"
-      ? serials
-      : serials.filter((book) => book.category === category);
-  const libraryBookIds = useMemo(
-    () => new Set(continueItems.map((book) => book.id)),
-    [continueItems],
-  );
-  const activeIsPreview = !libraryBookIds.has(activeBook.id);
-  const maxPlayerProgress = activeIsPreview
-    ? previewProgressLimit(activeBook)
-    : 100;
-  const featuredCoinPrice = featured.price === "free" ? 0 : featured.price;
-  const featuredShortfall = Math.max(0, featuredCoinPrice - readerCoins);
+  const isFiltering = query.trim().length > 0 || category !== "All";
+  const curatedStories = isFiltering
+    ? filteredStories
+    : trending.slice(0, showAll ? trending.length : 4);
+  const activeSerial = serials.length > 0
+    ? serials[Math.min(serialIndex, serials.length - 1)]
+    : null;
 
   useEffect(() => {
-    progressRef.current = playerProgress;
-  }, [playerProgress]);
+    if (searchOpen) searchRef.current?.focus();
+  }, [searchOpen]);
 
   useEffect(() => {
-    function focusSearch(event: KeyboardEvent) {
-      const target = event.target as HTMLElement | null;
-      const isEditing =
-        target?.isContentEditable ||
-        ["INPUT", "TEXTAREA", "SELECT"].includes(target?.tagName ?? "");
-
-      if (event.key === "/" && !isEditing) {
-        event.preventDefault();
-        document.getElementById("catalog-search")?.focus();
-      }
-    }
-
-    window.addEventListener("keydown", focusSearch);
-    return () => window.removeEventListener("keydown", focusSearch);
-  }, []);
-
-  useEffect(() => {
-    if (!playing) return;
-
-    const duration = durationToSeconds(activeBook.duration);
+    if (!isPlaying) return;
     const interval = window.setInterval(() => {
-      const nextProgress = Math.min(
-        progressRef.current + (100 / duration) * speed,
-        maxPlayerProgress,
-      );
-      progressRef.current = nextProgress;
-      setPlayerProgress(nextProgress);
-
-      if (nextProgress >= maxPlayerProgress) {
-        setPlaying(false);
-        setAnnouncement(
-          activeIsPreview
-            ? `Preview ended for ${activeBook.title}. Unlock access is not part of this front-end preview.`
-            : `${activeBook.title} finished.`,
-        );
-      }
+      setProgress((current) => {
+        const next = current + speed;
+        if (next >= playbackLimit) {
+          setIsPlaying(false);
+          setAnnouncement(
+            isPreview
+              ? `The timed preview of ${activeBook.title} has ended. Unlocking is only available through the no-charge interaction preview.`
+              : `You reached the end of ${activeBook.title}.`,
+          );
+          return playbackLimit;
+        }
+        return next;
+      });
     }, 1000);
-
     return () => window.clearInterval(interval);
-  }, [
-    activeBook.duration,
-    activeBook.title,
-    activeIsPreview,
-    maxPlayerProgress,
-    playing,
-    speed,
-  ]);
+  }, [activeBook.title, isPlaying, isPreview, playbackLimit, speed]);
 
-  function handlePlay(book: Book, initialProgress = 0) {
-    const isPreview = !libraryBookIds.has(book.id);
-    const playbackLimit = isPreview ? previewProgressLimit(book) : 100;
-
-    if (activeBook.id === book.id) {
-      if (!playing && progressRef.current >= playbackLimit) {
-        progressRef.current = 0;
-        setPlayerProgress(0);
-      }
-      setPlaying((current) => !current);
-      setAnnouncement(
-        `${playing ? "Paused" : "Playing"} ${
-          isPreview ? "the preview of " : ""
-        }${book.title}.`,
-      );
-      return;
+  const playBook = (book: Book) => {
+    const nextFullDuration = durationToSeconds(book.duration);
+    const nextIsPreview = !hasEntitlement(book);
+    const nextLimit = nextIsPreview
+      ? Math.min(book.previewDurationSeconds, nextFullDuration)
+      : nextFullDuration;
+    if (book.id !== activeBook.id) {
+      const resumeItem = continueItems.find((item) => item.id === book.id);
+      setActiveBook(book);
+      setProgress(resumeItem ? nextFullDuration * (resumeItem.progress / 100) : 0);
+    } else if (progress >= nextLimit) {
+      setProgress(0);
     }
-
-    const nextProgress = isPreview
-      ? 0
-      : Math.max(0, Math.min(initialProgress, playbackLimit));
-    setActiveBook(book);
-    progressRef.current = nextProgress;
-    setPlayerProgress(nextProgress);
-    setPlaying(true);
+    setPlayerVisible(true);
+    setIsPlaying(true);
     setAnnouncement(
-      isPreview
-        ? `Playing the ${formatClock(book.previewDurationSeconds)} preview of ${book.title}.`
-        : `Resuming ${book.title}.`,
+      nextIsPreview
+        ? `Playing a hard-limited ${Math.floor(nextLimit / 60)} minute preview of ${book.title}.`
+        : `Playing ${book.title}.`,
     );
-  }
+  };
 
-  function handleSave(book: Book) {
-    setSavedIds((current) => {
+  const toggleSave = (book: Book) => {
+    setSaved((current) => {
       const next = new Set(current);
-      const wasSaved = next.has(book.id);
-      if (wasSaved) next.delete(book.id);
+      if (next.has(book.id)) next.delete(book.id);
       else next.add(book.id);
-      setAnnouncement(
-        `${book.title} ${wasSaved ? "removed from" : "added to"} Saved.`,
-      );
+      setAnnouncement(`${book.title} ${next.has(book.id) ? "saved" : "removed from saved stories"}.`);
       return next;
     });
-  }
+  };
 
-  function handleUnlockPreview() {
-    if (featuredShortfall > 0) {
-      setAnnouncement(
-        `Unlock unavailable. You need ${featuredShortfall} more Reader Coins.`,
-      );
+  const requestUnlock = (book: Book) => {
+    if (book.price === "free") {
+      playBook(book);
+      setAnnouncement(`${book.title} is free to listen to. No Reader Coins are needed.`);
       return;
     }
+    setUnlockBook(book);
+  };
 
-    setFeaturedFlowPreviewed(true);
-    setUnlockOpen(false);
-    setAnnouncement(
-      `Interaction preview complete for ${featured.title}. No Reader Coins were charged and no Library entitlement was created.`,
-    );
-  }
-
-  function handlePlayerSeek(seconds: number) {
-    const duration = durationToSeconds(activeBook.duration);
-    const delta = (seconds / duration) * 100;
-    const next = Math.max(
-      0,
-      Math.min(maxPlayerProgress, progressRef.current + delta),
-    );
-    progressRef.current = next;
-    setPlayerProgress(next);
-  }
-
-  function handlePlayerProgress(value: number) {
-    const next = Math.max(0, Math.min(maxPlayerProgress, value));
-    progressRef.current = next;
-    setPlayerProgress(next);
-  }
-
-  function togglePlayback() {
-    if (!playing && progressRef.current >= maxPlayerProgress) {
-      progressRef.current = 0;
-      setPlayerProgress(0);
-    }
-    setPlaying((current) => !current);
-    setAnnouncement(
-      `${playing ? "Paused" : "Playing"} ${
-        activeIsPreview ? "the preview of " : ""
-      }${activeBook.title}.`,
-    );
-  }
-
-  function cycleSpeed() {
-    const speeds = [1, 1.25, 1.5, 2];
-    const currentIndex = speeds.indexOf(speed);
-    const next = speeds[(currentIndex + 1) % speeds.length] ?? 1;
-    setSpeed(next);
-    setAnnouncement(`Playback speed ${next} times.`);
-  }
-
-  const cardProps = (book: Book) => ({
-    book,
-    isActive: activeBook.id === book.id,
-    isPlaying: playing,
-    onPlay: handlePlay,
-    onSave: handleSave,
-    saved: savedIds.has(book.id),
-  });
+  const revealTransition = prefersReducedMotion
+    ? { duration: 0 }
+    : { duration: 0.38, ease: "easeOut" as const };
 
   return (
-    <div className="books-app" id="top">
-      <a className="skip-link" href="#main-content">
-        Skip to main content
-      </a>
+    <MotionConfig reducedMotion="user">
+      <div className="books-app" id="top">
+        <a className="skip-link" href="#main-content">Skip to stories</a>
+        <p aria-live="polite" className="sr-only">{announcement}</p>
 
-      <header className="books-header">
-        <div className="header-inner">
-          <a aria-label="AudiLink Books home" className="brand" href="#top">
-            <BrandMark />
-            <span className="brand-name">AudiLink</span>
-            <span className="surface-name">Books</span>
-          </a>
-
-          <nav aria-label="Primary navigation" className="desktop-nav">
-            <a aria-current="page" href="#discover">
-              Discover
+        <header className="books-header">
+          <div className="header-inner">
+            <a aria-label="AudiLink Books home" className="brand" href="#top">
+              <BrandMark />
+              <span><strong>AudiLink</strong><small>Books</small></span>
             </a>
-            <a href="#browse">Browse</a>
-            <a href="#continue-listening">Library</a>
-            <a href="#new-serials">Serials</a>
-          </nav>
-
-          <form
-            className="header-search"
-            onSubmit={(event) => {
-              event.preventDefault();
-              setAnnouncement(
-                normalizedQuery
-                  ? `${searchResults.length} search results found.`
-                  : "Type a title, creator, cast, or category to search.",
-              );
-            }}
-            role="search"
-          >
-            <Icon name="search" size={19} />
-            <label className="sr-only" htmlFor="catalog-search">
-              Search AudiLink Books
-            </label>
-            <input
-              autoComplete="off"
-              id="catalog-search"
-              onChange={(event) => setQuery(event.target.value)}
-              placeholder="Search stories, creators, casts…"
-              type="search"
-              value={query}
-            />
-            {query ? (
+            <nav aria-label="Primary navigation" className="desktop-nav">
+              <a aria-current="page" href="#discover">Discover</a>
+              <a href="#continue">Library</a>
+              <a href="#serials">Serials</a>
+            </nav>
+            <div className="header-actions">
               <button
-                aria-label="Clear search"
-                className="search-clear"
-                onClick={() => {
-                  setQuery("");
-                  setAnnouncement("Search cleared.");
-                }}
+                aria-expanded={searchOpen}
+                aria-label={searchOpen ? "Close search" : "Search stories"}
+                className="header-icon"
+                onClick={() => setSearchOpen((current) => !current)}
                 type="button"
               >
-                <Icon name="close" size={17} />
+                <Icon name={searchOpen ? "close" : "search"} size={19} />
               </button>
-            ) : (
-              <kbd aria-label="Keyboard shortcut, slash">/</kbd>
-            )}
-          </form>
-
-          <div className="header-actions">
-            <button
-              aria-label={`${readerCoins} Reader Coins. Open wallet`}
-              className="coin-balance"
-              onClick={() =>
-                setAnnouncement(
-                  `Reader Coin balance: ${readerCoins}. 20 promotional Reader Coins expire October 14, 2026.`,
-                )
-              }
-              type="button"
-            >
-              <span className="coin-disc">
-                <Icon name="coin" size={17} />
-              </span>
-              <span className="coin-copy">
-                <strong>{readerCoins}</strong>
-                <small>Reader Coins</small>
-              </span>
-            </button>
-            <button
-              aria-label="Notifications"
-              className="icon-button header-icon-button"
-              onClick={() => setAnnouncement("You’re all caught up. No new notifications.")}
-              type="button"
-            >
-              <Icon name="bell" size={19} />
-            </button>
-            <button
-              aria-label="Open account menu"
-              className="avatar-button"
-              onClick={() => setAnnouncement("Signed in as Ada Dede.")}
-              type="button"
-            >
-              AD
-            </button>
+              <button
+                aria-label={`${readerCoinBalance} Reader Coins. Transaction history is planned.`}
+                className="coin-balance"
+                onClick={() => setAnnouncement("Reader Coin history is planned for the account milestone.")}
+                type="button"
+              >
+                <Icon name="coin" size={16} />
+                <strong>{readerCoinBalance}</strong>
+                <span>Reader Coins</span>
+              </button>
+              <button aria-label="Account controls, planned" className="header-icon account-button" disabled title="Account controls are planned" type="button">
+                <Icon name="user" size={18} />
+              </button>
+            </div>
           </div>
-        </div>
-      </header>
+          <AnimatePresence initial={false}>
+            {searchOpen ? (
+              <motion.div
+                animate={{ height: "auto", opacity: 1 }}
+                className="header-search-panel"
+                exit={{ height: 0, opacity: 0 }}
+                initial={{ height: 0, opacity: 0 }}
+                transition={revealTransition}
+              >
+                <label htmlFor="story-search"><Icon name="search" size={18} /><span className="sr-only">Search stories</span></label>
+                <input
+                  id="story-search"
+                  onChange={(event) => setQuery(event.target.value)}
+                  placeholder="Search by title, creator, or feeling…"
+                  ref={searchRef}
+                  type="search"
+                  value={query}
+                />
+                {query ? <button onClick={() => setQuery("")} type="button">Clear</button> : null}
+              </motion.div>
+            ) : null}
+          </AnimatePresence>
+        </header>
 
-      <main id="main-content">
-        <section aria-labelledby="featured-title" className="hero" id="discover">
-          <div aria-hidden="true" className="hero-wash" />
-          <div className="hero-content">
-            <div className="hero-copy">
-              <p className="hero-eyebrow">
-                <span /> {featured.eyebrow}
-              </p>
+        <main id="main-content">
+          <section aria-labelledby="featured-title" className="hero" id="discover">
+            <div aria-hidden="true" className="hero-glow" />
+            <motion.div
+              animate={{ opacity: 1, y: 0 }}
+              className="hero-copy"
+              initial={prefersReducedMotion ? false : { opacity: 0, y: 18 }}
+              transition={revealTransition}
+            >
+              <p className="hero-eyebrow"><span />{featured.eyebrow}</p>
               <h1 id="featured-title">{featured.title}</h1>
               <p className="hero-description">{featured.description}</p>
-              <p className="hero-byline">
-                By <strong>{featured.creator}</strong>
-                <span aria-hidden="true">·</span>
-                Performed by {featured.cast}
-              </p>
-              <div className="hero-meta" aria-label="Book details">
-                <span>{featured.duration}</span>
-                <span>Complete book</span>
-                <span>English · GA</span>
-                <ProvenanceBadge book={featured} compact />
+              <p className="hero-byline">Written by <strong>{featured.creator}</strong> · Performed by {featured.cast}</p>
+              <div className="hero-meta">
+                <span>{featured.category}</span><span>{featured.duration}</span><span>Full cast</span>
               </div>
+              <ProvenanceBadge book={featured} />
               <div className="hero-actions">
+                <button className="primary-button" onClick={() => playBook(featured)} type="button">
+                  <Icon name="play" size={18} />Preview story
+                </button>
+                <button className="soft-button" onClick={() => requestUnlock(featured)} type="button">
+                  {featured.price === "free" ? "Listen free" : <>Unlock · <Icon name="coin" size={14} /> {featured.price}</>}
+                </button>
                 <button
-                  className="hero-play-button"
-                  onClick={() => handlePlay(featured)}
+                  aria-label={`${saved.has(featured.id) ? "Remove" : "Save"} ${featured.title}`}
+                  aria-pressed={saved.has(featured.id)}
+                  className="save-text-button"
+                  onClick={() => toggleSave(featured)}
                   type="button"
                 >
-                  <span className="hero-play-icon">
-                    <Icon
-                      name={activeBook.id === featured.id && playing ? "pause" : "play"}
-                      size={21}
-                    />
-                  </span>
-                  {activeBook.id === featured.id && playing
-                    ? "Pause preview"
-                    : "Listen to preview"}
-                </button>
-                <div className="unlock-action">
-                  <button
-                    className={`unlock-button${
-                      featuredFlowPreviewed ? " is-previewed" : ""
-                    }`}
-                    disabled={featuredShortfall > 0}
-                    onClick={() => setUnlockOpen(true)}
-                    type="button"
-                  >
-                    <Icon
-                      name={
-                        featuredFlowPreviewed
-                          ? "check"
-                          : featured.price === "free"
-                            ? "library"
-                            : "coin"
-                      }
-                      size={18}
-                    />
-                    {featuredFlowPreviewed
-                      ? "Interaction previewed · no account changes"
-                      : featured.price === "free"
-                        ? "Preview Add free to Library"
-                        : `Preview unlock for ${featured.price} Reader Coins`}
-                  </button>
-                  {featuredShortfall > 0 ? (
-                    <span className="unlock-shortfall" role="status">
-                      Need {featuredShortfall} more Reader Coins
-                    </span>
-                  ) : null}
-                </div>
-                <button
-                  aria-label={`${savedIds.has(featured.id) ? "Remove" : "Save"} ${
-                    featured.title
-                  } ${savedIds.has(featured.id) ? "from" : "to"} Saved`}
-                  aria-pressed={savedIds.has(featured.id)}
-                  className={`hero-save-button${
-                    savedIds.has(featured.id) ? " is-saved" : ""
-                  }`}
-                  onClick={() => handleSave(featured)}
-                  type="button"
-                >
-                  <Icon
-                    name={savedIds.has(featured.id) ? "check" : "bookmark"}
-                    size={19}
-                  />
-                  <span>{savedIds.has(featured.id) ? "Saved" : "Save"}</span>
+                  <Icon name={saved.has(featured.id) ? "check" : "bookmark"} size={17} />
+                  {saved.has(featured.id) ? "Saved" : "Save"}
                 </button>
               </div>
-            </div>
-
-            <div className="hero-art">
-              <div aria-hidden="true" className="hero-orbit hero-orbit-one" />
-              <div aria-hidden="true" className="hero-orbit hero-orbit-two" />
-              <div className="hero-cover-wrap">
-                <Cover title={featured.title} tone={featured.cover} />
-                <span aria-hidden="true" className="book-pages" />
-              </div>
-              <div className="hero-review">
-                <span className="review-stars" aria-label="Rated 4.8 out of 5">
-                  ★★★★★
-                </span>
-                <blockquote>
-                  “A luminous ensemble performance—made for listening after dark.”
-                </blockquote>
-                <cite>Editors’ listening room</cite>
-              </div>
-            </div>
-          </div>
-        </section>
-
-        <div className="content-shell">
-          <section
-            aria-labelledby="continue-title"
-            className="content-section continue-section"
-            id="continue-listening"
-          >
-            <SectionHeading
-              action={
-                <a className="text-link" href="#continue-listening">
-                  Open Library <Icon name="arrow" size={17} />
-                </a>
-              }
-              eyebrow="Your library"
-              id="continue-title"
-              title="Continue listening"
-            />
-            {continueItems.length ? (
-              <div className="continue-grid">
-                {continueItems.map((book) => (
-                  <ContinueCard
-                    book={book}
-                    isActive={activeBook.id === book.id}
-                    isPlaying={playing}
-                    key={book.id}
-                    onPlay={handlePlay}
-                  />
-                ))}
-              </div>
-            ) : (
-              <div className="inline-empty">
-                <p>Your listening activity will appear here after you start a title.</p>
-                <a href="#browse">Browse stories</a>
-              </div>
-            )}
+            </motion.div>
+            <motion.div
+              animate={{ opacity: 1, x: 0 }}
+              className="hero-art"
+              initial={prefersReducedMotion ? false : { opacity: 0, x: 20 }}
+              transition={{ ...revealTransition, delay: prefersReducedMotion ? 0 : 0.08 }}
+            >
+              <div className="hero-cover-shadow" />
+              <Cover book={featured} />
+              <p><span>Listeners say</span>“A world you can hear breathing.”</p>
+            </motion.div>
           </section>
 
-          <section
-            aria-labelledby="browse-title"
-            className="content-section browse-section"
-            id="browse"
-          >
-            <SectionHeading
-              copy="Human stories, full-cast worlds, and new voices—selected for the way they sound."
-              eyebrow="Curated discovery"
-              id="browse-title"
-              title="Find your next world"
-            />
-            <div aria-label="Filter stories by category" className="category-row">
-              {categories.map((item) => (
-                <button
-                  aria-pressed={category === item}
-                  className={category === item ? "is-active" : ""}
-                  key={item}
-                  onClick={() => {
-                    setCategory(item);
-                    setQuery("");
-                    setAnnouncement(
-                      item === "All"
-                        ? "Showing all categories."
-                        : `Showing ${item} stories.`,
-                    );
-                  }}
-                  type="button"
-                >
-                  {item}
-                </button>
-              ))}
-            </div>
-          </section>
-
-          {normalizedQuery ? (
-            <section aria-labelledby="search-results-title" className="content-section">
-              <SectionHeading
-                eyebrow="Search"
-                id="search-results-title"
-                title={`${searchResults.length} ${
-                  searchResults.length === 1 ? "result" : "results"
-                } for “${query.trim()}”`}
-              />
-              {searchResults.length ? (
-                <div className="book-grid search-grid">
-                  {searchResults.map((book) => (
-                    <BookCard key={book.id} {...cardProps(book)} />
-                  ))}
+          <div className="content-shell">
+            <section aria-labelledby="continue-title" className="content-section resume-section" id="continue">
+              <SectionHeading id="continue-title" eyebrow="Your library" title="Pick up where you left off" />
+              {continueItems.length > 0 ? (
+                <div className="resume-row">
+                  {continueItems.slice(0, 2).map((item) => <ResumeCard item={item} key={item.id} onPlay={playBook} />)}
                 </div>
               ) : (
-                <div className="empty-search">
-                  <span className="empty-search-icon">
-                    <Icon name="search" size={28} />
-                  </span>
-                  <h3>No stories found</h3>
-                  <p>
-                    Try a title, creator, cast member, or a broader category.
-                    Your search is still here to edit.
-                  </p>
-                  <button className="secondary-button" onClick={() => setQuery("")} type="button">
-                    Clear search
-                  </button>
-                </div>
+                <p className="empty-library">Your listening history will appear here after you start a free title or unlock a story.</p>
               )}
             </section>
-          ) : (
-            <>
-              <section aria-labelledby="trending-title" className="content-section">
-                <SectionHeading
-                  action={
-                    <span className="results-count">
-                      {filteredTrending.length} selected
-                    </span>
-                  }
-                  eyebrow="What listeners love"
-                  id="trending-title"
-                  title={category === "All" ? "Trending now" : `Trending in ${category}`}
-                />
-                {filteredTrending.length ? (
-                  <div className="book-grid">
-                    {filteredTrending.map((book) => (
-                      <BookCard key={book.id} {...cardProps(book)} />
-                    ))}
-                  </div>
-                ) : (
-                  <div className="inline-empty">
-                    <p>No {category} titles are trending in this collection yet.</p>
-                    <button onClick={() => setCategory("All")} type="button">
-                      Show every category
-                    </button>
-                  </div>
-                )}
-              </section>
 
-              <section
-                aria-labelledby="new-serials-title"
-                className="content-section serials-section"
-                id="new-serials"
+            <section aria-labelledby="curated-title" className="content-section curated-section">
+              <SectionHeading
+                copy="A small weekly edit—chosen for voice, atmosphere, and the stories that stay after the final line."
+                eyebrow={isFiltering ? "Discover" : "The weekly edit"}
+                id="curated-title"
+                title={isFiltering ? `${filteredStories.length} matching ${filteredStories.length === 1 ? "story" : "stories"}` : "Listen to something remarkable"}
               >
-                <SectionHeading
-                  copy="Follow a story while it unfolds. Every new episode is reviewed before release."
-                  eyebrow="Fresh episodes"
-                  id="new-serials-title"
-                  title="New & returning serials"
-                />
-                {filteredSerials.length ? (
-                  <div className="serial-grid">
-                    {filteredSerials.map((book) => (
-                      <SerialCard key={book.id} {...cardProps(book)} />
+                <button
+                  aria-expanded={filtersOpen}
+                  className="tool-button"
+                  onClick={() => setFiltersOpen((current) => !current)}
+                  type="button"
+                >
+                  Genres <Icon name="chevron" size={16} />
+                </button>
+                <button className="tool-button" onClick={() => setSearchOpen(true)} type="button"><Icon name="search" size={16} /> Search</button>
+              </SectionHeading>
+
+              <AnimatePresence initial={false}>
+                {filtersOpen ? (
+                  <motion.div
+                    animate={{ height: "auto", opacity: 1 }}
+                    className="category-row"
+                    exit={{ height: 0, opacity: 0 }}
+                    initial={{ height: 0, opacity: 0 }}
+                    transition={revealTransition}
+                  >
+                    {categories.map((item) => (
+                      <button
+                        aria-pressed={category === item}
+                        className={category === item ? "is-active" : ""}
+                        key={item}
+                        onClick={() => setCategory(item)}
+                        type="button"
+                      >
+                        {item}
+                      </button>
+                    ))}
+                  </motion.div>
+                ) : null}
+              </AnimatePresence>
+
+              {curatedStories.length > 0 ? (
+                <motion.div className="story-grid" layout>
+                  <AnimatePresence initial={false}>
+                    {curatedStories.map((book) => (
+                      <StoryCard
+                        book={book}
+                        key={book.id}
+                        onPlay={playBook}
+                        onSave={toggleSave}
+                        onUnlock={requestUnlock}
+                        saved={saved.has(book.id)}
+                      />
+                    ))}
+                  </AnimatePresence>
+                </motion.div>
+              ) : (
+                <motion.div
+                  animate={{ opacity: 1 }}
+                  className="empty-results"
+                  initial={prefersReducedMotion ? false : { opacity: 0 }}
+                  transition={revealTransition}
+                >
+                  <p className="eyebrow">No match this time</p>
+                  <h3>Try a wider shelf.</h3>
+                  <p>Clear the search or choose another genre.</p>
+                  <button className="text-button" onClick={() => { setQuery(""); setCategory("All"); }} type="button">Reset discovery</button>
+                </motion.div>
+              )}
+
+              {!isFiltering && trending.length > 4 ? (
+                <button aria-expanded={showAll} className="reveal-button" onClick={() => setShowAll((current) => !current)} type="button">
+                  {showAll ? "Show the shorter edit" : `Reveal ${trending.length - 4} more`}
+                  <Icon name="arrow" size={16} />
+                </button>
+              ) : null}
+            </section>
+
+            {activeSerial ? (
+              <section aria-labelledby="serial-title" className="content-section serial-section" id="serials">
+                <SectionHeading eyebrow="Made for episodic listening" title="A serial to follow" />
+                <AnimatePresence initial={false} mode="wait">
+                  <motion.article
+                    animate={{ opacity: 1, x: 0 }}
+                    className="serial-spotlight"
+                    exit={{ opacity: 0, x: -14 }}
+                    initial={{ opacity: 0, x: 14 }}
+                    key={activeSerial.id}
+                    transition={revealTransition}
+                  >
+                    <div className="serial-art"><Cover book={activeSerial} /></div>
+                    <div className="serial-copy">
+                      <p className="eyebrow">{activeSerial.eyebrow}</p>
+                      <h3 id="serial-title">{activeSerial.title}</h3>
+                      <p className="serial-episode">{activeSerial.episode} · {activeSerial.duration}</p>
+                      <p className="serial-description">{activeSerial.description}</p>
+                      <p className="serial-byline">Created by {activeSerial.creator} · {activeSerial.cast}</p>
+                      <ProvenanceBadge book={activeSerial} />
+                      <div className="serial-actions">
+                        <button className="primary-button" onClick={() => playBook(activeSerial)} type="button"><Icon name="play" size={17} />Listen now</button>
+                        <button className="soft-button" onClick={() => requestUnlock(activeSerial)} type="button">
+                          {activeSerial.price === "free" ? "Free episode" : <><Icon name="coin" size={14} /> {activeSerial.price} coins</>}
+                        </button>
+                      </div>
+                    </div>
+                  </motion.article>
+                </AnimatePresence>
+                {serials.length > 1 ? (
+                  <div aria-label="Choose a serial" className="serial-switcher" role="group">
+                    {serials.map((serial, index) => (
+                      <button
+                        aria-label={`Show ${serial.title}`}
+                        aria-pressed={serialIndex === index}
+                        key={serial.id}
+                        onClick={() => setSerialIndex(index)}
+                        type="button"
+                      ><span />{String(index + 1).padStart(2, "0")} · {serial.title}</button>
                     ))}
                   </div>
-                ) : (
-                  <div className="inline-empty">
-                    <p>No {category} serials are in this week’s selection.</p>
-                    <button onClick={() => setCategory("All")} type="button">
-                      Show all serials
-                    </button>
-                  </div>
-                )}
+                ) : null}
               </section>
-            </>
-          )}
+            ) : null}
 
-          <section aria-label="Your AudiLink Books library" className="library-banner">
-            <div className="library-banner-icon">
-              <Icon name="library" size={28} />
-            </div>
-            <div>
-              <p className="section-eyebrow">Always yours to return to</p>
-              <h2>Your stories, one place, every device.</h2>
-              <p>
-                Library preview: progress, bookmarks, and protected offline
-                listening will stay together across AudiLink Books.
-              </p>
-            </div>
-            <a className="library-link" href="#continue-listening">
-              Review current listens
-              <span>{savedIds.size + 5} titles in this UI preview</span>
-              <Icon name="arrow" size={19} />
-            </a>
-          </section>
-        </div>
-      </main>
+            <section aria-labelledby="library-note-title" className="library-note">
+              <div>
+                <p className="eyebrow">Your listening, kept simple</p>
+                <h2 id="library-note-title">Stories stay unlocked once purchased.</h2>
+              </div>
+              <p>Paid audio streams securely in AudiLink. App-managed offline listening is part of the product roadmap; raw paid files are never exposed.</p>
+            </section>
+          </div>
+        </main>
 
-      <footer className="books-footer">
-        <div>
-          <BrandMark />
-          <span>AudiLink Books</span>
-        </div>
-        <p>Stories deserve to be heard.</p>
-        <div aria-label="Planned footer destinations" className="footer-roadmap">
-          <span>About <small>Coming later</small></span>
-          <span>Accessibility <small>Coming later</small></span>
-          <span>Creator terms <small>Coming later</small></span>
-        </div>
-      </footer>
+        <footer className="books-footer">
+          <div className="footer-brand"><BrandMark /><span><strong>AudiLink Books</strong><small>Stories deserve to be heard.</small></span></div>
+          <p>Independent stories, thoughtfully performed.</p>
+          <div aria-label="Planned destinations" className="footer-planned">
+            {['About', 'Creator program', 'Help'].map((label) => <button disabled key={label} title={`${label} is planned`} type="button">{label}<span>Planned</span></button>)}
+          </div>
+        </footer>
 
-      <PersistentPlayer
-        book={activeBook}
-        maxProgress={maxPlayerProgress}
-        onProgress={handlePlayerProgress}
-        onSeek={handlePlayerSeek}
-        onSpeed={cycleSpeed}
-        onToggle={togglePlayback}
-        playing={playing}
-        preview={activeIsPreview}
-        progress={playerProgress}
-        speed={speed}
-      />
+        <UnlockDialog
+          balance={readerCoinBalance}
+          book={unlockBook}
+          onClose={() => setUnlockBook(null)}
+          onPreviewCheckout={(book) => setAnnouncement(`Purchase flow previewed for ${book.title}. No Reader Coins were charged and no entitlement was created.`)}
+        />
 
-      <nav aria-label="Mobile navigation" className="mobile-nav">
-        <a aria-current="page" href="#discover">
-          <Icon name="home" size={20} />
-          <span>Discover</span>
-        </a>
-        <a href="#browse">
-          <Icon name="compass" size={20} />
-          <span>Browse</span>
-        </a>
-        <a href="#continue-listening">
-          <Icon name="library" size={20} />
-          <span>Library</span>
-        </a>
-        <button aria-label="Downloads, coming later" disabled type="button">
-          <Icon name="download" size={20} />
-          <span>Downloads</span>
-          <small>Soon</small>
-        </button>
-        <button
-          aria-label="More destinations, coming later"
-          disabled
-          type="button"
-        >
-          <Icon name="more" size={20} />
-          <span>More</span>
-          <small>Soon</small>
-        </button>
-      </nav>
-
-      <UnlockDialog
-        balance={readerCoins}
-        book={featured}
-        onClose={() => setUnlockOpen(false)}
-        onConfirm={handleUnlockPreview}
-        open={unlockOpen}
-      />
-
-      <div aria-atomic="true" aria-live="polite" className="sr-only">
-        {announcement}
+        <AnimatePresence initial={false}>
+          {playerVisible ? (
+            <PersistentPlayer
+              book={activeBook}
+              isPlaying={isPlaying}
+              isPreview={isPreview}
+              muted={muted}
+              onPlayPause={() => {
+                if (progress >= playbackLimit) setProgress(0);
+                setIsPlaying((current) => !current);
+              }}
+              onSeek={(value) => setProgress(Math.min(Math.max(0, value), playbackLimit))}
+              onSkip={(seconds) => setProgress((current) => Math.min(playbackLimit, Math.max(0, current + seconds)))}
+              onSpeed={() => setSpeed((current) => current === 1 ? 1.25 : current === 1.25 ? 1.5 : 1)}
+              onToggleMute={() => setMuted((current) => !current)}
+              progress={progress}
+              speed={speed}
+              total={playbackLimit}
+            />
+          ) : null}
+        </AnimatePresence>
       </div>
-    </div>
+    </MotionConfig>
   );
 }

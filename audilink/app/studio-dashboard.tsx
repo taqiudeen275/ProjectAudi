@@ -2,24 +2,19 @@
 
 import type { ProjectKind } from "@audilink/contracts";
 import { productSurfaces } from "@audilink/ui";
+import { AnimatePresence, motion, useReducedMotion } from "motion/react";
+import Link from "next/link";
 import {
   type FormEvent,
-  type KeyboardEvent as ReactKeyboardEvent,
   useEffect,
   useMemo,
   useRef,
   useState,
 } from "react";
 
-type CreateActionId =
-  | "audiobook"
-  | "tts"
-  | "voice"
-  | "sfx"
-  | "transcription";
+type CreateActionId = "audiobook" | "tts" | "voice" | "sfx" | "transcription";
 
 type IconName =
-  | "activity"
   | "arrow"
   | "bell"
   | "book"
@@ -27,27 +22,16 @@ type IconName =
   | "chevron"
   | "close"
   | "credits"
-  | "earnings"
-  | "grid"
-  | "help"
-  | "home"
-  | "library"
-  | "list"
-  | "market"
   | "menu"
   | "more"
   | "pause"
   | "play"
   | "plus"
-  | "projects"
-  | "publish"
   | "search"
-  | "settings"
   | "sound"
   | "spark"
   | "transcript"
   | "upload"
-  | "user"
   | "voice"
   | "wave";
 
@@ -60,7 +44,7 @@ export type CreateAction = {
   tone: "story" | "cyan" | "violet" | "amber" | "blue";
 };
 
-const contractProjectKindLabels = {
+const projectKindLabels = {
   audiobook: "Audiobook",
   serial: "Serial",
   textToSpeech: "Speech",
@@ -70,10 +54,7 @@ const contractProjectKindLabels = {
 export type StudioProject = {
   id: string;
   title: string;
-  kind:
-    | (typeof contractProjectKindLabels)[ProjectKind]
-    | "Transcription"
-    | "Voice";
+  kind: (typeof projectKindLabels)[ProjectKind] | "Transcription" | "Voice";
   detail: string;
   status: string;
   progress: number;
@@ -100,632 +81,239 @@ type StudioDashboardProps = {
   jobs: StudioJob[];
 };
 
-const filters = [
-  "All",
-  ...Object.values(contractProjectKindLabels),
-  "Transcription",
-  "Voice",
-] as const;
-
+const filters = ["All", ...Object.values(projectKindLabels), "Transcription", "Voice"] as const;
 type ProjectFilter = (typeof filters)[number];
 
-const navGroups: Array<{
-  label: string;
-  items: Array<{ label: string; href?: string; icon: IconName; active?: boolean }>;
-}> = [
-  {
-    label: "Work",
-    items: [
-      { label: "Home", href: "#top", icon: "home", active: true },
-      { label: "Projects", href: "#projects", icon: "projects" },
-      { label: "Create", href: "#create", icon: "plus" },
-    ],
-  },
-  {
-    label: "Library & publish",
-    items: [
-      { label: "Assets", icon: "library" },
-      { label: "Marketplace", icon: "market" },
-      { label: "Publish & releases", icon: "publish" },
-    ],
-  },
-  {
-    label: "Operations",
-    items: [
-      { label: "Activity", href: "#activity", icon: "activity" },
-      { label: "Usage & plan", href: "#credits", icon: "credits" },
-      { label: "Earnings", icon: "earnings" },
-    ],
-  },
-];
-
-function Icon({
-  name,
-  size = 20,
-  strokeWidth = 1.8,
-}: {
-  name: IconName;
-  size?: number;
-  strokeWidth?: number;
-}) {
-  const common = {
+function Icon({ name, size = 20 }: { name: IconName; size?: number }) {
+  const line = {
     fill: "none",
     stroke: "currentColor",
     strokeLinecap: "round" as const,
     strokeLinejoin: "round" as const,
-    strokeWidth,
-  };
-
-  const paths: Record<IconName, React.ReactNode> = {
-    activity: (
-      <>
-        <path {...common} d="M4 18V9m5 9V5m5 13v-7m5 7V3" />
-        <path {...common} d="M2.5 21h19" />
-      </>
-    ),
-    arrow: <path {...common} d="M5 12h14m-5-5 5 5-5 5" />,
-    bell: (
-      <>
-        <path {...common} d="M6 9a6 6 0 0 1 12 0c0 7 3 7 3 7H3s3 0 3-7Z" />
-        <path {...common} d="M10 20h4" />
-      </>
-    ),
-    book: (
-      <>
-        <path {...common} d="M4 4.5h10a3 3 0 0 1 3 3V20H7a3 3 0 0 1-3-3V4.5Z" />
-        <path {...common} d="M7 4.5V17a3 3 0 0 0 3 3" />
-        <path {...common} d="M17 8h3v12h-3" />
-      </>
-    ),
-    check: <path {...common} d="m5 12 4 4L19 6" />,
-    chevron: <path {...common} d="m8 10 4 4 4-4" />,
-    close: <path {...common} d="M6 6l12 12M18 6 6 18" />,
-    credits: (
-      <>
-        <path {...common} d="M4 8.5A4.5 4.5 0 0 1 8.5 4H18a2 2 0 0 1 2 2v13H8.5A4.5 4.5 0 0 1 4 14.5v-6Z" />
-        <path {...common} d="M4 9h13v6H4m13-3h.01" />
-      </>
-    ),
-    earnings: (
-      <>
-        <circle {...common} cx="12" cy="12" r="9" />
-        <path {...common} d="M15 8.5c-.7-.6-1.7-1-3-1-1.7 0-3 .8-3 2s1.1 1.8 3.2 2.3c2 .5 2.8 1.2 2.8 2.4 0 1.3-1.2 2.3-3.2 2.3-1.4 0-2.7-.5-3.6-1.3M12 5.5v13" />
-      </>
-    ),
-    grid: (
-      <>
-        <rect {...common} x="4" y="4" width="6" height="6" rx="1" />
-        <rect {...common} x="14" y="4" width="6" height="6" rx="1" />
-        <rect {...common} x="4" y="14" width="6" height="6" rx="1" />
-        <rect {...common} x="14" y="14" width="6" height="6" rx="1" />
-      </>
-    ),
-    help: (
-      <>
-        <circle {...common} cx="12" cy="12" r="9" />
-        <path {...common} d="M9.7 9a2.4 2.4 0 0 1 4.6.9c0 2-2.3 2-2.3 4M12 17.5h.01" />
-      </>
-    ),
-    home: (
-      <>
-        <path {...common} d="m3 10 9-7 9 7" />
-        <path {...common} d="M5.5 9v11h13V9M9 20v-6h6v6" />
-      </>
-    ),
-    library: (
-      <>
-        <rect {...common} x="3" y="4" width="5" height="16" rx="1" />
-        <rect {...common} x="9.5" y="4" width="5" height="16" rx="1" />
-        <path {...common} d="m16 5 4-1 2 15-4 1-2-15Z" />
-      </>
-    ),
-    list: (
-      <>
-        <path {...common} d="M9 6h12M9 12h12M9 18h12" />
-        <path {...common} d="M4 6h.01M4 12h.01M4 18h.01" />
-      </>
-    ),
-    market: (
-      <>
-        <path {...common} d="M4 9h16l-2-5H6L4 9Z" />
-        <path {...common} d="M5 9v11h14V9M9 20v-6h6v6" />
-        <path {...common} d="M4 9a3 3 0 0 0 5 2 3 3 0 0 0 6 0 3 3 0 0 0 5-2" />
-      </>
-    ),
-    menu: <path {...common} d="M4 7h16M4 12h16M4 17h16" />,
-    more: (
-      <>
-        <circle cx="5" cy="12" r="1.2" fill="currentColor" />
-        <circle cx="12" cy="12" r="1.2" fill="currentColor" />
-        <circle cx="19" cy="12" r="1.2" fill="currentColor" />
-      </>
-    ),
-    pause: (
-      <>
-        <path {...common} d="M9 7v10M15 7v10" />
-      </>
-    ),
-    play: <path d="m9 7 8 5-8 5V7Z" fill="currentColor" />,
-    plus: <path {...common} d="M12 5v14M5 12h14" />,
-    projects: (
-      <>
-        <path {...common} d="M3 7h7l2 2h9v11H3V7Z" />
-        <path {...common} d="M3 7V4h7l2 3" />
-      </>
-    ),
-    publish: (
-      <>
-        <path {...common} d="M12 16V3m-5 5 5-5 5 5" />
-        <path {...common} d="M5 13v7h14v-7" />
-      </>
-    ),
-    search: (
-      <>
-        <circle {...common} cx="10.5" cy="10.5" r="6.5" />
-        <path {...common} d="m15.5 15.5 5 5" />
-      </>
-    ),
-    settings: (
-      <>
-        <circle {...common} cx="12" cy="12" r="3" />
-        <path {...common} d="M19 13.5v-3l-2-.6a7 7 0 0 0-.7-1.7l1-1.8-2.1-2.1-1.8 1a7 7 0 0 0-1.7-.7L11 2.5H8l-.6 2.1a7 7 0 0 0-1.7.7l-1.8-1-2.1 2.1 1 1.8a7 7 0 0 0-.7 1.7L0 10.5v3l2.1.6a7 7 0 0 0 .7 1.7l-1 1.8 2.1 2.1 1.8-1a7 7 0 0 0 1.7.7l.6 2.1h3l.6-2.1a7 7 0 0 0 1.7-.7l1.8 1 2.1-2.1-1-1.8a7 7 0 0 0 .7-1.7l2.1-.6Z" transform="translate(2) scale(.83)" />
-      </>
-    ),
-    sound: (
-      <>
-        <path {...common} d="M4 14h3l5 4V6L7 10H4v4Z" />
-        <path {...common} d="M16 9a4.5 4.5 0 0 1 0 6m2.5-8.5a8 8 0 0 1 0 11" />
-      </>
-    ),
-    spark: (
-      <>
-        <path {...common} d="M12 2l1.5 5.5L19 9l-5.5 1.5L12 16l-1.5-5.5L5 9l5.5-1.5L12 2Z" />
-        <path {...common} d="m19 15 .7 2.3L22 18l-2.3.7L19 21l-.7-2.3L16 18l2.3-.7L19 15Z" />
-      </>
-    ),
-    transcript: (
-      <>
-        <path {...common} d="M6 3h9l4 4v14H6V3Z" />
-        <path {...common} d="M15 3v5h4M9 12h7M9 16h7" />
-      </>
-    ),
-    upload: (
-      <>
-        <path {...common} d="M12 16V4m-5 5 5-5 5 5" />
-        <path {...common} d="M5 17v3h14v-3" />
-      </>
-    ),
-    user: (
-      <>
-        <circle {...common} cx="12" cy="8" r="4" />
-        <path {...common} d="M4.5 21a7.5 7.5 0 0 1 15 0" />
-      </>
-    ),
-    voice: (
-      <>
-        <rect {...common} x="9" y="3" width="6" height="12" rx="3" />
-        <path {...common} d="M5.5 11a6.5 6.5 0 0 0 13 0M12 17.5V21M8.5 21h7" />
-      </>
-    ),
-    wave: <path {...common} d="M3 12h2l2-6 3 12 3-14 3 12 2-7 2 3h1" />,
+    strokeWidth: 1.8,
   };
 
   return (
-    <svg
-      aria-hidden="true"
-      viewBox="0 0 24 24"
-      width={size}
-      height={size}
-      focusable="false"
-    >
-      {paths[name]}
+    <svg aria-hidden="true" focusable="false" viewBox="0 0 24 24" width={size} height={size}>
+      {name === "arrow" ? <path {...line} d="M5 12h14m-5-5 5 5-5 5" /> : null}
+      {name === "bell" ? (
+        <><path {...line} d="M6 9a6 6 0 0 1 12 0c0 6.5 3 7 3 7H3s3-.5 3-7Z" /><path {...line} d="M10 20h4" /></>
+      ) : null}
+      {name === "book" ? (
+        <><path {...line} d="M4 4.5h10a3 3 0 0 1 3 3V20H7a3 3 0 0 1-3-3V4.5Z" /><path {...line} d="M7 4.5V17a3 3 0 0 0 3 3M17 8h3v12h-3" /></>
+      ) : null}
+      {name === "check" ? <path {...line} d="m5 12 4 4L19 6" /> : null}
+      {name === "chevron" ? <path {...line} d="m8 10 4 4 4-4" /> : null}
+      {name === "close" ? <path {...line} d="M6 6l12 12M18 6 6 18" /> : null}
+      {name === "credits" ? (
+        <><path {...line} d="M4 8.5A4.5 4.5 0 0 1 8.5 4H18a2 2 0 0 1 2 2v13H8.5A4.5 4.5 0 0 1 4 14.5v-6Z" /><path {...line} d="M4 9h13v6H4m13-3h.01" /></>
+      ) : null}
+      {name === "menu" ? <path {...line} d="M4 8h16M4 16h16" /> : null}
+      {name === "more" ? <><circle cx="5" cy="12" r="1.2" fill="currentColor" /><circle cx="12" cy="12" r="1.2" fill="currentColor" /><circle cx="19" cy="12" r="1.2" fill="currentColor" /></> : null}
+      {name === "pause" ? <path {...line} d="M9 7v10M15 7v10" /> : null}
+      {name === "play" ? <path d="m9 7 8 5-8 5V7Z" fill="currentColor" /> : null}
+      {name === "plus" ? <path {...line} d="M12 5v14M5 12h14" /> : null}
+      {name === "search" ? <><circle {...line} cx="10.5" cy="10.5" r="6.5" /><path {...line} d="m15.5 15.5 5 5" /></> : null}
+      {name === "sound" ? <><path {...line} d="M4 14h3l5 4V6l-5 4H4v4Z" /><path {...line} d="M16 9a4.5 4.5 0 0 1 0 6m2.5-8.5a8 8 0 0 1 0 11" /></> : null}
+      {name === "spark" ? <><path {...line} d="M12 2l1.5 5.5L19 9l-5.5 1.5L12 16l-1.5-5.5L5 9l5.5-1.5L12 2Z" /><path {...line} d="m19 15 .7 2.3L22 18l-2.3.7L19 21l-.7-2.3L16 18l2.3-.7L19 15Z" /></> : null}
+      {name === "transcript" ? <><path {...line} d="M6 3h9l4 4v14H6V3Z" /><path {...line} d="M15 3v5h4M9 12h7M9 16h7" /></> : null}
+      {name === "upload" ? <><path {...line} d="M12 16V4m-5 5 5-5 5 5" /><path {...line} d="M5 17v3h14v-3" /></> : null}
+      {name === "voice" ? <><rect {...line} x="9" y="3" width="6" height="12" rx="3" /><path {...line} d="M5.5 11a6.5 6.5 0 0 0 13 0M12 17.5V21M8.5 21h7" /></> : null}
+      {name === "wave" ? <path {...line} d="M3 12h2l2-6 3 12 3-14 3 12 2-7 2 3h1" /> : null}
     </svg>
   );
 }
 
-function Brand() {
+function StudioBrand({ compact = false }: { compact?: boolean }) {
   const [productName, surfaceName] = productSurfaces.studio.name.split(" ", 2);
-
   return (
-    <div className="brand-lockup" aria-label={productSurfaces.studio.name}>
-      <span className="brand-signal" aria-hidden="true">
-        <i />
-        <i />
-        <i />
-        <i />
-        <i />
-      </span>
-      <span className="brand-name">
-        {productName} <small>{surfaceName}</small>
-      </span>
-    </div>
+    <span className={`studio-brand${compact ? " is-compact" : ""}`}>
+      <span className="studio-signal" aria-hidden="true"><i /><i /><i /><i /><i /></span>
+      <span>{productName}</span>
+      <small>{surfaceName}</small>
+    </span>
   );
 }
 
-function Navigation({ onNavigate }: { onNavigate?: () => void }) {
+function Waveform({ bars, playing = false }: { bars: number[]; playing?: boolean }) {
+  const shouldReduceMotion = useReducedMotion();
   return (
-    <nav className="primary-navigation" aria-label="Studio">
-      {navGroups.map((group) => (
-        <div className="nav-group" key={group.label}>
-          <p className="nav-group-label">{group.label}</p>
-          {group.items.map((item) => {
-            const content = (
-              <>
-                <span className="nav-icon">
-                  <Icon name={item.icon} size={19} />
-                </span>
-                <span>{item.label}</span>
-                {item.label === "Activity" ? (
-                  <span className="nav-count" aria-label="2 active jobs">
-                    2
-                  </span>
-                ) : null}
-                {!item.href ? <span className="nav-availability">Later</span> : null}
-              </>
-            );
-
-            return item.href ? (
-              <a
-                className={`nav-item${item.active ? " is-active" : ""}`}
-                href={item.href}
-                key={item.label}
-                onClick={onNavigate}
-                aria-current={item.active ? "page" : undefined}
-              >
-                {content}
-              </a>
-            ) : (
-              <button
-                aria-label={`${item.label}, coming later`}
-                className="nav-item is-coming-later"
-                disabled
-                key={item.label}
-                title="Coming later"
-                type="button"
-              >
-                {content}
-              </button>
-            );
-          })}
-        </div>
-      ))}
-    </nav>
-  );
-}
-
-function Sidebar() {
-  return (
-    <aside className="desktop-sidebar">
-      <div className="sidebar-brand">
-        <Brand />
-      </div>
-      <Navigation />
-      <div className="sidebar-bottom">
-        <button
-          aria-label="Workspace settings, coming later"
-          className="nav-item is-coming-later"
-          disabled
-          title="Coming later"
-          type="button"
-        >
-          <span className="nav-icon">
-            <Icon name="settings" size={19} />
-          </span>
-          <span>Workspace</span>
-          <span className="nav-availability">Later</span>
-        </button>
-        <button
-          aria-label="Help and shortcuts, coming later"
-          className="nav-item is-coming-later"
-          disabled
-          title="Coming later"
-          type="button"
-        >
-          <span className="nav-icon">
-            <Icon name="help" size={19} />
-          </span>
-          <span>Help & shortcuts</span>
-          <span className="nav-availability">Later</span>
-        </button>
-        <button className="profile-card" type="button">
-          <span className="profile-avatar" aria-hidden="true">
-            AT
-          </span>
-          <span className="profile-copy">
-            <strong>Atarq</strong>
-            <small>Personal workspace</small>
-          </span>
-          <Icon name="chevron" size={16} />
-        </button>
-      </div>
-    </aside>
-  );
-}
-
-function Waveform({
-  bars,
-  active = false,
-  compact = false,
-}: {
-  bars: number[];
-  active?: boolean;
-  compact?: boolean;
-}) {
-  return (
-    <span
-      className={`waveform${active ? " is-playing" : ""}${compact ? " is-compact" : ""}`}
-      aria-hidden="true"
-    >
+    <span className={`workspace-wave${playing ? " is-playing" : ""}`} aria-hidden="true">
       {bars.map((height, index) => (
-        <i key={`${height}-${index}`} style={{ height }} />
+        <motion.i
+          key={`${height}-${index}`}
+          animate={{ opacity: playing ? 0.92 : 0.34, scaleY: playing ? 1 : 0.55 }}
+          transition={{ duration: shouldReduceMotion ? 0 : 0.28, delay: shouldReduceMotion ? 0 : Math.min(index * 0.008, 0.1), ease: [0.22, 1, 0.36, 1] }}
+          style={{ height }}
+        />
       ))}
     </span>
   );
 }
 
-function ProjectCard({
-  project,
-  playing,
-  onPlay,
-  onOpen,
-}: {
-  project: StudioProject;
-  playing: boolean;
-  onPlay: () => void;
-  onOpen: () => void;
-}) {
+function FocusProject({ project, playing, onPlay, onOpen }: { project: StudioProject; playing: boolean; onPlay: () => void; onOpen: () => void }) {
+  const shouldReduceMotion = useReducedMotion();
+  const initials = project.title.split(" ").slice(0, 2).map((word) => word[0]).join("");
   return (
-    <article className="project-card">
-      <div className={`project-art project-art--${project.tone}`}>
-        <div className="project-art-topline">
-          <span>{project.kind}</span>
-          <button
-            className="icon-button project-more"
-            type="button"
-            aria-label={`More actions for ${project.title}`}
-          >
-            <Icon name="more" size={18} />
-          </button>
+    <motion.article className="focus-project" layout={!shouldReduceMotion}>
+      <div className={`focus-art focus-art--${project.tone}`} aria-hidden="true">
+        <span>{initials}</span>
+        <small>{project.kind}</small>
+      </div>
+      <div className="focus-project-body">
+        <div className="focus-project-topline">
+          <span>{project.status}</span>
+          <small>Edited {project.updated}</small>
         </div>
-        <div className="project-monogram" aria-hidden="true">
-          {project.title
-            .split(" ")
-            .slice(0, 2)
-            .map((word) => word[0])
-            .join("")}
-        </div>
-        <div className="project-audio">
-          <button
-            className="play-button"
+        <h2>{project.title}</h2>
+        <p>{project.detail} · Your last edit is ready.</p>
+        <div className="focus-transport">
+          <motion.button
             type="button"
+            className="workspace-play"
+            whileTap={{ scale: shouldReduceMotion ? 1 : 0.94 }}
             onClick={onPlay}
             aria-label={`${playing ? "Pause" : "Play"} preview of ${project.title}`}
             aria-pressed={playing}
           >
-            <Icon name={playing ? "pause" : "play"} size={18} />
-          </button>
-          <Waveform bars={project.waveform} active={playing} />
+            <Icon name={playing ? "pause" : "play"} size={20} />
+          </motion.button>
+          <Waveform bars={project.waveform} playing={playing} />
           <span>{project.duration}</span>
         </div>
-      </div>
-      <div className="project-body">
-        <div className="project-heading">
-          <div>
-            <h3>{project.title}</h3>
-            <p>{project.detail}</p>
-          </div>
-          <span className={`status-dot status-dot--${project.progress === 100 ? "ready" : "active"}`}>
-            {project.status}
-          </span>
+        <div className="focus-progress-copy">
+          <span>{project.progress}% complete</span>
+          <span>{project.progress < 100 ? "Continue chapter" : "Ready to review"}</span>
         </div>
-        {project.progress < 100 ? (
-          <div
-            aria-label={`${project.title} progress`}
-            aria-valuemax={100}
-            aria-valuemin={0}
-            aria-valuenow={project.progress}
-            className="project-progress"
-            role="progressbar"
-          >
-            <span style={{ width: `${project.progress}%` }} />
-          </div>
-        ) : null}
-        <div className="project-footer">
-          <span>Edited {project.updated}</span>
-          <button type="button" className="text-button" onClick={onOpen}>
-            Open project <Icon name="arrow" size={16} />
-          </button>
+        <div className="focus-progress" role="progressbar" aria-label={`${project.title} progress`} aria-valuemin={0} aria-valuemax={100} aria-valuenow={project.progress}>
+          <motion.span initial={shouldReduceMotion ? false : { width: 0 }} animate={{ width: `${project.progress}%` }} transition={{ duration: shouldReduceMotion ? 0 : 0.7, ease: [0.22, 1, 0.36, 1] }} />
         </div>
+        <button className="workspace-primary" type="button" onClick={onOpen}>
+          Open project <Icon name="arrow" size={17} />
+        </button>
       </div>
-    </article>
+    </motion.article>
   );
 }
 
-function QuickActionCard({
-  action,
-  onClick,
-}: {
-  action: CreateAction;
-  onClick: () => void;
-}) {
+function ProjectRow({ project, playing, onPlay, onOpen }: { project: StudioProject; playing: boolean; onPlay: () => void; onOpen: () => void }) {
+  const shouldReduceMotion = useReducedMotion();
   return (
-    <button
-      className={`quick-action quick-action--${action.tone}`}
-      type="button"
-      onClick={onClick}
-    >
-      <span className="quick-action-icon">
-        <Icon name={action.icon} size={22} />
-      </span>
-      <span className="quick-action-copy">
-        <strong>{action.label}</strong>
-        <small>{action.description}</small>
-      </span>
-      <span className="quick-action-meta">{action.meta}</span>
-      <span className="quick-action-arrow" aria-hidden="true">
-        <Icon name="arrow" size={17} />
-      </span>
-    </button>
+    <motion.article className="project-row" layout={!shouldReduceMotion} initial={shouldReduceMotion ? false : { opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} exit={shouldReduceMotion ? { opacity: 1, y: 0 } : { opacity: 0, y: -6 }} transition={{ duration: shouldReduceMotion ? 0 : 0.24 }}>
+      <button className="project-row-play" type="button" onClick={onPlay} aria-label={`${playing ? "Pause" : "Play"} ${project.title}`} aria-pressed={playing}>
+        <Icon name={playing ? "pause" : "play"} size={18} />
+      </button>
+      <div className="project-row-title">
+        <h3>{project.title}</h3>
+        <p>{project.kind} · {project.detail}</p>
+      </div>
+      <Waveform bars={project.waveform.slice(0, 12)} playing={playing} />
+      <div className="project-row-status">
+        <span>{project.status}</span>
+        <small>{project.updated}</small>
+      </div>
+      <button className="project-open" type="button" onClick={onOpen} aria-label={`Open ${project.title}`}>
+        <Icon name="arrow" size={18} />
+      </button>
+    </motion.article>
   );
 }
 
-function JobCard({
-  job,
-  cancelling,
-  onCancel,
-  onOpen,
-}: {
-  job: StudioJob;
-  cancelling: boolean;
-  onCancel: () => void;
-  onOpen: () => void;
-}) {
-  const status = cancelling ? "Cancelling" : job.status;
-  const isActive = job.status === "Running" && !cancelling;
-
+function JobRow({ job, cancelling, onCancel, onOpen }: { job: StudioJob; cancelling: boolean; onCancel: () => void; onOpen: () => void }) {
+  const state = cancelling ? "Cancelling" : job.status;
   return (
-    <article className="job-card">
-      <div className="job-topline">
-        <span className={`job-state job-state--${status.toLowerCase()}`}>
-          {isActive ? <i aria-hidden="true" /> : null}
-          {status}
-        </span>
-        <span>{job.estimate}</span>
+    <div className="job-row">
+      <span className={`job-indicator job-indicator--${job.status.toLowerCase()}`} aria-hidden="true" />
+      <div>
+        <h3>{job.title}</h3>
+        <p>{job.project} · {cancelling ? "Finishing current safe step" : job.phase}</p>
       </div>
-      <h3>{job.title}</h3>
-      <p>{job.project}</p>
-      <div
-        aria-label={`${job.title} progress`}
-        aria-valuemax={100}
-        aria-valuemin={0}
-        aria-valuenow={job.progress}
-        className={`job-progress${isActive ? " is-active" : ""}`}
-        role="progressbar"
-      >
-        <span style={{ width: `${cancelling ? job.progress : Math.max(job.progress, 6)}%` }} />
+      <div className="job-row-meta">
+        <span>{state}</span>
+        <small>{job.estimate}</small>
       </div>
-      <div className="job-detail">
-        <span>{cancelling ? "Finishing current safe step" : job.phase}</span>
-        <span>{job.meta}</span>
+      <div className="job-progress" role="progressbar" aria-label={`${job.title} progress`} aria-valuemin={0} aria-valuemax={100} aria-valuenow={job.progress}>
+        <span style={{ width: `${Math.max(job.progress, 5)}%` }} />
       </div>
-      <div className="job-actions">
-        {job.status === "Running" && !cancelling ? (
-          <button type="button" className="text-button is-muted" onClick={onCancel}>
-            Cancel
-          </button>
-        ) : null}
-        {job.status === "Complete" ? (
-          <button type="button" className="text-button" onClick={onOpen}>
-            Open results <Icon name="arrow" size={15} />
-          </button>
-        ) : null}
-        {job.status === "Queued" ? (
-          <button type="button" className="text-button is-muted" onClick={onCancel}>
-            Leave queue
-          </button>
-        ) : null}
-      </div>
-    </article>
+      {job.status === "Complete" ? (
+        <button className="workspace-text-button" type="button" onClick={onOpen}>Review</button>
+      ) : (
+        <button className="workspace-text-button" type="button" disabled={cancelling} onClick={onCancel}>{job.status === "Queued" ? "Leave" : "Cancel"}</button>
+      )}
+    </div>
   );
 }
 
-export default function StudioDashboard({
-  createActions,
-  projects,
-  jobs,
-}: StudioDashboardProps) {
-  const [search, setSearch] = useState("");
-  const [filter, setFilter] = useState<ProjectFilter>("All");
-  const [view, setView] = useState<"grid" | "list">("grid");
+export default function StudioDashboard({ createActions, projects, jobs }: StudioDashboardProps) {
+  const shouldReduceMotion = useReducedMotion();
   const [playingId, setPlayingId] = useState<string | null>(null);
-  const [mobileNavOpen, setMobileNavOpen] = useState(false);
   const [createOpen, setCreateOpen] = useState(false);
+  const [mobileNavOpen, setMobileNavOpen] = useState(false);
   const [selectedCreate, setSelectedCreate] = useState<CreateActionId>("audiobook");
   const [projectName, setProjectName] = useState("");
   const [startMethod, setStartMethod] = useState<"blank" | "import">("blank");
+  const [showAll, setShowAll] = useState(false);
+  const [browseOpen, setBrowseOpen] = useState(false);
+  const [activityOpen, setActivityOpen] = useState(false);
+  const [creditsOpen, setCreditsOpen] = useState(false);
+  const [search, setSearch] = useState("");
+  const [filter, setFilter] = useState<ProjectFilter>("All");
   const [cancelledJobs, setCancelledJobs] = useState<string[]>([]);
   const [notice, setNotice] = useState<string | null>(null);
 
-  const searchRef = useRef<HTMLInputElement>(null);
   const dialogRef = useRef<HTMLDivElement>(null);
   const dialogCloseRef = useRef<HTMLButtonElement>(null);
+  const menuRef = useRef<HTMLDivElement>(null);
+  const menuCloseRef = useRef<HTMLButtonElement>(null);
   const previousFocusRef = useRef<HTMLElement | null>(null);
-  const mobileDrawerRef = useRef<HTMLElement>(null);
-  const mobileDrawerCloseRef = useRef<HTMLButtonElement>(null);
-  const mobileNavPreviousFocusRef = useRef<HTMLElement | null>(null);
+  const menuPreviousFocusRef = useRef<HTMLElement | null>(null);
 
-  const selectedAction =
-    createActions.find((action) => action.id === selectedCreate) ?? createActions[0];
-
+  const selectedAction = createActions.find((action) => action.id === selectedCreate) ?? createActions[0];
   const filteredProjects = useMemo(() => {
     const query = search.trim().toLocaleLowerCase();
     return projects.filter((project) => {
-      const matchesType = filter === "All" || project.kind === filter;
-      const matchesSearch =
-        !query ||
-        `${project.title} ${project.kind} ${project.detail} ${project.status}`
-          .toLocaleLowerCase()
-          .includes(query);
-      return matchesType && matchesSearch;
+      const matchesFilter = filter === "All" || project.kind === filter;
+      const matchesSearch = !query || `${project.title} ${project.kind} ${project.detail} ${project.status}`.toLocaleLowerCase().includes(query);
+      return matchesFilter && matchesSearch;
     });
   }, [filter, projects, search]);
+  const visibleProjects = showAll || browseOpen ? filteredProjects : filteredProjects.slice(0, 3);
+
+  const motionTransition = { duration: shouldReduceMotion ? 0 : 0.28, ease: [0.22, 1, 0.36, 1] as const };
 
   useEffect(() => {
     const handleShortcut = (event: globalThis.KeyboardEvent) => {
       const target = event.target as HTMLElement | null;
-      const editing =
-        target?.tagName === "INPUT" ||
-        target?.tagName === "TEXTAREA" ||
-        target?.getAttribute("contenteditable") === "true";
-
+      const editing = target?.tagName === "INPUT" || target?.tagName === "TEXTAREA" || target?.getAttribute("contenteditable") === "true";
       if (event.key === "/" && !editing && !createOpen) {
         event.preventDefault();
-        searchRef.current?.focus();
+        setBrowseOpen(true);
+        requestAnimationFrame(() => document.querySelector<HTMLInputElement>("#studio-project-search")?.focus());
       }
-
     };
-
     window.addEventListener("keydown", handleShortcut);
     return () => window.removeEventListener("keydown", handleShortcut);
   }, [createOpen]);
 
   useEffect(() => {
     if (!createOpen) return;
-
     document.body.classList.add("has-overlay");
     dialogCloseRef.current?.focus();
-
-    const handleDialogKey = (event: globalThis.KeyboardEvent) => {
+    const handleKey = (event: globalThis.KeyboardEvent) => {
       if (event.key === "Escape") {
         setCreateOpen(false);
         return;
       }
-
-      const dialog = dialogRef.current;
-      if (event.key !== "Tab" || !dialog) return;
-
-      const focusable = Array.from(
-        dialog.querySelectorAll<HTMLElement>(
-          'button:not([disabled]), input:not([disabled]), select:not([disabled]), [href], [tabindex]:not([tabindex="-1"])',
-        ),
-      );
-
-      const first = focusable[0];
-      const last = focusable.at(-1);
-      if (!first || !last) return;
-
-      if (event.shiftKey && document.activeElement === first) {
-        event.preventDefault();
-        last.focus();
-      } else if (!event.shiftKey && document.activeElement === last) {
-        event.preventDefault();
-        first.focus();
-      }
+      if (event.key !== "Tab" || !dialogRef.current) return;
+      const items = Array.from(dialogRef.current.querySelectorAll<HTMLElement>('button:not([disabled]), input:not([disabled]), [href], [tabindex]:not([tabindex="-1"])'));
+      const first = items[0];
+      const last = items.at(-1);
+      if (event.shiftKey && document.activeElement === first) { event.preventDefault(); last?.focus(); }
+      else if (!event.shiftKey && document.activeElement === last) { event.preventDefault(); first?.focus(); }
     };
-
-    window.addEventListener("keydown", handleDialogKey);
+    window.addEventListener("keydown", handleKey);
     return () => {
-      window.removeEventListener("keydown", handleDialogKey);
+      window.removeEventListener("keydown", handleKey);
       document.body.classList.remove("has-overlay");
       previousFocusRef.current?.focus();
     };
@@ -733,685 +321,230 @@ export default function StudioDashboard({
 
   useEffect(() => {
     if (!mobileNavOpen) return;
-
     document.body.classList.add("has-overlay");
-    mobileDrawerCloseRef.current?.focus();
-
-    const handleDrawerKey = (event: globalThis.KeyboardEvent) => {
-      if (event.key === "Escape") {
-        event.preventDefault();
-        setMobileNavOpen(false);
-        return;
-      }
-
-      const drawer = mobileDrawerRef.current;
-      if (event.key !== "Tab" || !drawer) return;
-
-      const focusable = Array.from(
-        drawer.querySelectorAll<HTMLElement>(
-          'button:not([disabled]), input:not([disabled]), select:not([disabled]), [href], [tabindex]:not([tabindex="-1"])',
-        ),
-      );
-
-      if (focusable.length === 0) {
-        event.preventDefault();
-        return;
-      }
-
-      const first = focusable[0];
-      const last = focusable.at(-1);
-      if (!first || !last) return;
-      const activeElement = document.activeElement;
-
-      if (!drawer.contains(activeElement)) {
-        event.preventDefault();
-        (event.shiftKey ? last : first).focus();
-      } else if (event.shiftKey && activeElement === first) {
-        event.preventDefault();
-        last.focus();
-      } else if (!event.shiftKey && activeElement === last) {
-        event.preventDefault();
-        first.focus();
-      }
+    menuCloseRef.current?.focus();
+    const handleKey = (event: globalThis.KeyboardEvent) => {
+      if (event.key === "Escape") { setMobileNavOpen(false); return; }
+      if (event.key !== "Tab" || !menuRef.current) return;
+      const items = Array.from(menuRef.current.querySelectorAll<HTMLElement>('button:not([disabled]), [href], [tabindex]:not([tabindex="-1"])'));
+      const first = items[0];
+      const last = items.at(-1);
+      if (event.shiftKey && document.activeElement === first) { event.preventDefault(); last?.focus(); }
+      else if (!event.shiftKey && document.activeElement === last) { event.preventDefault(); first?.focus(); }
     };
-
-    window.addEventListener("keydown", handleDrawerKey);
+    window.addEventListener("keydown", handleKey);
     return () => {
-      window.removeEventListener("keydown", handleDrawerKey);
+      window.removeEventListener("keydown", handleKey);
       document.body.classList.remove("has-overlay");
-      mobileNavPreviousFocusRef.current?.focus();
+      menuPreviousFocusRef.current?.focus();
     };
   }, [mobileNavOpen]);
 
   useEffect(() => {
     if (!notice) return;
-    const timeout = window.setTimeout(() => setNotice(null), 4200);
+    const timeout = window.setTimeout(() => setNotice(null), 5200);
     return () => window.clearTimeout(timeout);
   }, [notice]);
 
   const openCreate = (id: CreateActionId) => {
     previousFocusRef.current = document.activeElement as HTMLElement | null;
     setSelectedCreate(id);
-    setProjectName("");
-    setStartMethod("blank");
-    setMobileNavOpen(false);
     setCreateOpen(true);
   };
 
-  const openMobileNavigation = () => {
-    mobileNavPreviousFocusRef.current = document.activeElement as HTMLElement | null;
-    setMobileNavOpen(true);
-  };
-
-  const closeCreate = () => setCreateOpen(false);
-
   const submitCreate = (event: FormEvent<HTMLFormElement>) => {
     event.preventDefault();
-    const title = projectName.trim() || `Untitled ${selectedAction.label}`;
-    setNotice(`${title} is ready for its first setup step.`);
-    closeCreate();
+    const name = projectName.trim() || `Untitled ${selectedAction.label}`;
+    setCreateOpen(false);
+    setProjectName("");
+    setNotice(`${name} setup scenario is ready. No generation or billing occurred.`);
   };
 
-  const handleProjectKeyDown = (event: ReactKeyboardEvent, project: StudioProject) => {
-    if (event.key === "Enter") {
-      setNotice(`${project.title} selected. Editor routing is the next milestone.`);
-    }
-  };
+  const notifyProject = (project: StudioProject) => setNotice(`${project.title} selected. The full editor arrives in a later milestone.`);
+  const focusedProject = projects[0];
+
+  if (!focusedProject) {
+    return (
+      <main className="workspace-empty-state">
+        <StudioBrand />
+        <h1>Your workspace is ready.</h1>
+        <p>Create the first project to begin.</p>
+        <button className="workspace-primary" type="button" onClick={() => openCreate("audiobook")}>New project</button>
+      </main>
+    );
+  }
 
   return (
-    <>
-      <div
-        className="studio-shell"
-        id="top"
-        inert={mobileNavOpen || createOpen ? true : undefined}
-      >
-        <a className="skip-link" href="#main-content">
-          Skip to Studio workspace
-        </a>
-        <Sidebar />
+    <div className="workspace-shell" id="top">
+      <a className="skip-link" href="#studio-main">Skip to Studio workspace</a>
 
-        <div className="workspace-shell">
-          <header className="mobile-header">
-            <button
-              className="icon-button"
-              type="button"
-              onClick={openMobileNavigation}
-              aria-label="Open Studio navigation"
-              aria-expanded={mobileNavOpen}
-              aria-controls="mobile-navigation-dialog"
-            >
-              <Icon name="menu" size={22} />
-            </button>
-            <Brand />
-            <button
-              className="mobile-credit"
-              type="button"
-              onClick={() => document.querySelector("#credits")?.scrollIntoView()}
-              aria-label="824 Studio Credits available"
-            >
-              <Icon name="spark" size={15} /> 824
-            </button>
-          </header>
-
-          <header className="desktop-topbar">
-            <div className="topbar-context">
-              <span>Personal workspace</span>
-              <strong>Creator home</strong>
-            </div>
-            <label className="global-search" htmlFor="global-project-search">
-              <Icon name="search" size={18} />
-              <input
-                ref={searchRef}
-                id="global-project-search"
-                type="search"
-                value={search}
-                onChange={(event) => setSearch(event.target.value)}
-                placeholder="Search projects and assets"
-                aria-keyshortcuts="/"
-              />
-              <kbd aria-hidden="true">/</kbd>
-            </label>
-            <div className="topbar-actions">
-              <button
-                className="credit-chip"
-                type="button"
-                onClick={() => document.querySelector("#credits")?.scrollIntoView()}
-                aria-label="Free plan, 824 Studio Credits available"
-              >
-                <span className="credit-chip-icon">
-                  <Icon name="spark" size={16} />
-                </span>
-                <span>
-                  <small>Studio Credits</small>
-                  <strong>824</strong>
-                </span>
-                <span className="plan-label">Free</span>
-              </button>
-              <button
-                className="icon-button notification-button"
-                type="button"
-                aria-label="Notifications, 1 new"
-                onClick={() => setNotice("You’re caught up. One render is still running.")}
-              >
-                <Icon name="bell" size={20} />
-                <i aria-hidden="true" />
-              </button>
-              <button className="avatar-button" type="button" aria-label="Open account menu">
-                AT
-              </button>
-            </div>
-          </header>
-
-          <main className="dashboard" id="main-content" tabIndex={-1}>
-            <p className="foundation-preview">
-              <Icon name="spark" size={13} aria-hidden="true" />
-              Foundation preview <span aria-hidden="true">·</span> local scenario data
-            </p>
-            <section className="hero-panel" aria-labelledby="studio-heading">
-              <div className="hero-copy">
-                <p className="eyebrow">
-                  <span /> Your studio is in sync
-                </p>
-                <h1 id="studio-heading">Make the story sound alive.</h1>
-                <p className="hero-description">
-                  Build a cast, shape every take, and move from manuscript to master in one
-                  precise audio workspace.
-                </p>
-                <div className="hero-actions">
-                  <button
-                    className="primary-button"
-                    type="button"
-                    onClick={() => openCreate("audiobook")}
-                  >
-                    <Icon name="plus" size={18} /> Start a project
-                  </button>
-                  <a className="secondary-button" href="#projects">
-                    Continue recent work <Icon name="arrow" size={17} />
-                  </a>
-                </div>
-              </div>
-              <div className="hero-stage" aria-hidden="true">
-                <div className="stage-orbit stage-orbit--one" />
-                <div className="stage-orbit stage-orbit--two" />
-                <div className="stage-core">
-                  <span>Current scene</span>
-                  <strong>07</strong>
-                  <small>Glasshouse arrival</small>
-                </div>
-                <Waveform
-                  bars={[9, 16, 27, 19, 34, 23, 13, 31, 21, 38, 18, 28, 11, 24, 35, 20, 29, 15, 26, 18, 32, 12]}
-                  compact
-                />
-                <span className="stage-note stage-note--cast">6 voices cast</span>
-                <span className="stage-note stage-note--takes">3 takes ready</span>
-              </div>
-            </section>
-
-            <section className="quick-create-section" id="create" aria-labelledby="quick-heading">
-              <div className="section-heading compact-heading">
-                <div>
-                  <p className="section-kicker">Create</p>
-                  <h2 id="quick-heading">Start with a signal</h2>
-                </div>
-                <p>Every chargeable action shows a Studio Credit estimate before it runs.</p>
-              </div>
-              <div className="quick-action-grid">
-                {createActions.map((action) => (
-                  <QuickActionCard
-                    action={action}
-                    key={action.id}
-                    onClick={() => openCreate(action.id)}
-                  />
-                ))}
-              </div>
-            </section>
-
-            <div className="dashboard-grid">
-              <section className="projects-section" id="projects" aria-labelledby="projects-heading">
-                <div className="section-heading">
-                  <div>
-                    <p className="section-kicker">Workspace</p>
-                    <h2 id="projects-heading">Recent projects</h2>
-                    <p>Pick up exactly where you left off.</p>
-                  </div>
-                  <button
-                    className="secondary-button section-action"
-                    type="button"
-                    onClick={() => openCreate("audiobook")}
-                  >
-                    <Icon name="plus" size={17} /> New project
-                  </button>
-                </div>
-
-                <div className="project-toolbar">
-                  <div className="filter-scroll" aria-label="Filter projects by type">
-                    {filters.map((item) => (
-                      <button
-                        key={item}
-                        type="button"
-                        className={`filter-button${filter === item ? " is-selected" : ""}`}
-                        onClick={() => setFilter(item)}
-                        aria-pressed={filter === item}
-                      >
-                        {item === "Sound Effect" ? "Effects" : item}
-                      </button>
-                    ))}
-                  </div>
-                  <div className="project-toolbar-end">
-                    <label className="project-search" htmlFor="project-search">
-                      <span className="sr-only">Search recent projects</span>
-                      <Icon name="search" size={17} />
-                      <input
-                        id="project-search"
-                        type="search"
-                        value={search}
-                        onChange={(event) => setSearch(event.target.value)}
-                        placeholder="Search projects"
-                      />
-                    </label>
-                    <div className="view-switch" aria-label="Project view">
-                      <button
-                        type="button"
-                        className={view === "grid" ? "is-selected" : ""}
-                        onClick={() => setView("grid")}
-                        aria-label="Grid view"
-                        aria-pressed={view === "grid"}
-                      >
-                        <Icon name="grid" size={17} />
-                      </button>
-                      <button
-                        type="button"
-                        className={view === "list" ? "is-selected" : ""}
-                        onClick={() => setView("list")}
-                        aria-label="List view"
-                        aria-pressed={view === "list"}
-                      >
-                        <Icon name="list" size={18} />
-                      </button>
-                    </div>
-                  </div>
-                </div>
-
-                <p className="results-summary" aria-live="polite">
-                  {filteredProjects.length} {filteredProjects.length === 1 ? "project" : "projects"}
-                  {filter !== "All" ? ` · ${filter}` : ""}
-                </p>
-
-                {filteredProjects.length ? (
-                  <div className={`project-grid project-grid--${view}`}>
-                    {filteredProjects.map((project) => (
-                      <div
-                        key={project.id}
-                        onKeyDown={(event) => handleProjectKeyDown(event, project)}
-                      >
-                        <ProjectCard
-                          project={project}
-                          playing={playingId === project.id}
-                          onPlay={() =>
-                            setPlayingId((current) =>
-                              current === project.id ? null : project.id,
-                            )
-                          }
-                          onOpen={() =>
-                            setNotice(
-                              `${project.title} selected. The full editor arrives in the next milestone.`,
-                            )
-                          }
-                        />
-                      </div>
-                    ))}
-                  </div>
-                ) : (
-                  <div className="empty-projects">
-                    <span>
-                      <Icon name="search" size={24} />
-                    </span>
-                    <h3>No projects match this view</h3>
-                    <p>Your projects are still here. Clear the search or show every type.</p>
-                    <button
-                      type="button"
-                      className="secondary-button"
-                      onClick={() => {
-                        setSearch("");
-                        setFilter("All");
-                      }}
-                    >
-                      Clear filters
-                    </button>
-                  </div>
-                )}
-              </section>
-
-              <aside className="dashboard-rail" aria-label="Studio status">
-                <section className="rail-panel activity-panel" id="activity" aria-labelledby="jobs-heading">
-                  <div className="rail-heading">
-                    <div>
-                      <p className="section-kicker">Activity</p>
-                      <h2 id="jobs-heading">Jobs</h2>
-                    </div>
-                    <button className="rail-link" disabled title="Coming later" type="button">
-                      View all <span>Later</span>
-                    </button>
-                  </div>
-                  <div className="jobs-list">
-                    {jobs.map((job) => (
-                      <JobCard
-                        key={job.id}
-                        job={job}
-                        cancelling={cancelledJobs.includes(job.id)}
-                        onCancel={() => {
-                          setCancelledJobs((current) => [...current, job.id]);
-                          setNotice(
-                            job.status === "Queued"
-                              ? `${job.title} will leave the queue without a charge.`
-                              : `Cancellation requested for ${job.title}. Completed work will be reconciled.`,
-                          );
-                        }}
-                        onOpen={() => setNotice(`${job.title} results are ready to review.`)}
-                      />
-                    ))}
-                  </div>
-                </section>
-
-                <section className="rail-panel credits-panel" id="credits" aria-labelledby="credits-heading">
-                  <div className="credits-topline">
-                    <span className="plan-badge">Free plan</span>
-                    <button className="rail-link" disabled title="Coming later" type="button">
-                      Usage <span>Later</span>
-                    </button>
-                  </div>
-                  <div className="credits-main">
-                    <div
-                      className="credit-meter"
-                      style={{
-                        background:
-                          "conic-gradient(var(--accent-cyan) 0 82.4%, rgba(255,255,255,.09) 82.4% 100%)",
-                      }}
-                      role="img"
-                      aria-label="824 Studio Credits available from the current balance"
-                    >
-                      <span>
-                        <Icon name="spark" size={19} />
-                      </span>
-                    </div>
-                    <div>
-                      <p>Studio Credits</p>
-                      <h2 id="credits-heading">
-                        <span className="sr-only">Studio Credits: </span>824
-                      </h2>
-                      <span>available now</span>
-                    </div>
-                  </div>
-                  <div className="credit-ledger-preview">
-                    <div>
-                      <span>Reserved</span>
-                      <strong>96</strong>
-                    </div>
-                    <div>
-                      <span>Settled this grant</span>
-                      <strong>80</strong>
-                    </div>
-                  </div>
-                  <div className="grant-note">
-                    <Icon name="check" size={16} />
-                    <span>
-                      Credits roll over
-                      <small>Next 1,000-credit grant · Sep 1</small>
-                    </span>
-                  </div>
-                  <button
-                    className="upgrade-button"
-                    type="button"
-                    onClick={() => setNotice("Plan comparison will open here in the billing milestone.")}
-                  >
-                    Compare plans <Icon name="arrow" size={16} />
-                  </button>
-                </section>
-
-                <section className="rail-panel tip-panel">
-                  <span className="tip-icon">
-                    <Icon name="spark" size={18} />
-                  </span>
-                  <div>
-                    <p>Studio note</p>
-                    <h3>Lock the lines you love.</h3>
-                    <span>Accepted takes stay untouched when you regenerate nearby dialogue.</span>
-                  </div>
-                </section>
-              </aside>
-            </div>
-          </main>
-        </div>
-
-        <nav className="mobile-bottom-nav" aria-label="Primary mobile navigation">
-          <a href="#top" className="is-active" aria-current="page">
-            <Icon name="home" size={20} />
-            <span>Home</span>
-          </a>
-          <a href="#projects">
-            <Icon name="projects" size={20} />
-            <span>Projects</span>
-          </a>
-          <button type="button" className="mobile-create-button" onClick={() => openCreate("audiobook")}>
-            <span>
-              <Icon name="plus" size={22} />
-            </span>
-            <small>Create</small>
-          </button>
-          <button
-            aria-label="Assets, coming later"
-            disabled
-            title="Coming later"
-            type="button"
-          >
-            <Icon name="library" size={20} />
-            <span>Assets</span>
-          </button>
-          <button
-            aria-controls="mobile-navigation-dialog"
-            aria-expanded={mobileNavOpen}
-            type="button"
-            onClick={openMobileNavigation}
-          >
-            <Icon name="menu" size={20} />
-            <span>More</span>
-          </button>
+      <header className="workspace-header">
+        <Link className="workspace-brand-link" href="/" aria-label="AudiLink Studio public home"><StudioBrand /></Link>
+        <nav className="workspace-nav" aria-label="Workspace navigation">
+          <a className="is-current" href="#top" aria-current="page">Home</a>
+          <a href="#projects">Projects</a>
+          <a href="#activity">Activity</a>
         </nav>
-      </div>
-
-      {mobileNavOpen ? (
-        <div className="mobile-drawer-layer">
-          <button
-            className="drawer-backdrop"
-            type="button"
-            onClick={() => setMobileNavOpen(false)}
-            aria-label="Close Studio navigation"
-            tabIndex={-1}
-          />
-          <aside
-            aria-labelledby="mobile-navigation-title"
-            aria-modal="true"
-            className="mobile-drawer"
-            id="mobile-navigation-dialog"
-            ref={mobileDrawerRef}
-            role="dialog"
-          >
-            <h2 className="sr-only" id="mobile-navigation-title">
-              Studio navigation
-            </h2>
-            <div className="drawer-heading">
-              <Brand />
-              <button
-                ref={mobileDrawerCloseRef}
-                className="icon-button"
-                type="button"
-                onClick={() => setMobileNavOpen(false)}
-                aria-label="Close Studio navigation"
-                autoFocus
-              >
-                <Icon name="close" size={21} />
-              </button>
-            </div>
-            <Navigation onNavigate={() => setMobileNavOpen(false)} />
-            <div className="drawer-account">
-              <span className="profile-avatar">AT</span>
-              <span>
-                <strong>Atarq</strong>
-                <small>Free plan · 824 Studio Credits</small>
-              </span>
-            </div>
-          </aside>
-        </div>
-      ) : null}
-
-      {createOpen ? (
-        <div className="create-layer">
-          <button
-            className="create-backdrop"
-            type="button"
-            onClick={closeCreate}
-            aria-label="Close create panel"
-            tabIndex={-1}
-          />
-          <div
-            className="create-panel"
-            role="dialog"
-            aria-modal="true"
-            aria-labelledby="create-panel-title"
-            aria-describedby="create-panel-description"
-            ref={dialogRef}
-          >
-            <div className="create-panel-header">
-              <div>
-                <p className="section-kicker">New creation</p>
-                <h2 id="create-panel-title">Choose your starting signal</h2>
-                <p id="create-panel-description">
-                  You can move between tools later without losing your source work.
-                </p>
-              </div>
-              <button
-                ref={dialogCloseRef}
-                className="icon-button"
-                type="button"
-                onClick={closeCreate}
-                aria-label="Close create panel"
-              >
-                <Icon name="close" size={21} />
-              </button>
-            </div>
-
-            <div className="create-type-list" aria-label="Creation type">
-              {createActions.map((action) => (
-                <button
-                  type="button"
-                  key={action.id}
-                  className={`create-type create-type--${action.tone}${
-                    selectedCreate === action.id ? " is-selected" : ""
-                  }`}
-                  onClick={() => setSelectedCreate(action.id)}
-                  aria-pressed={selectedCreate === action.id}
-                >
-                  <span>
-                    <Icon name={action.icon} size={19} />
-                  </span>
-                  <strong>{action.label}</strong>
-                  {selectedCreate === action.id ? <Icon name="check" size={17} /> : null}
-                </button>
-              ))}
-            </div>
-
-            <form className="create-form" onSubmit={submitCreate}>
-              <div className="selected-create-summary">
-                <span className={`quick-action-icon quick-action-icon--${selectedAction.tone}`}>
-                  <Icon name={selectedAction.icon} size={23} />
-                </span>
-                <div>
-                  <h3>{selectedAction.label}</h3>
-                  <p>{selectedAction.description}</p>
-                </div>
-              </div>
-
-              <label className="field-label" htmlFor="creation-name">
-                Working title
-                <input
-                  id="creation-name"
-                  value={projectName}
-                  onChange={(event) => setProjectName(event.target.value)}
-                  placeholder={`Untitled ${selectedAction.label}`}
-                  autoComplete="off"
-                />
-                <small>You can rename this at any time.</small>
-              </label>
-
-              <fieldset className="start-methods">
-                <legend>How would you like to begin?</legend>
-                <button
-                  className={startMethod === "blank" ? "is-selected" : ""}
-                  type="button"
-                  onClick={() => setStartMethod("blank")}
-                  aria-pressed={startMethod === "blank"}
-                >
-                  <span>
-                    <Icon name="plus" size={20} />
-                  </span>
-                  <strong>Start fresh</strong>
-                  <small>Open a clean, editable workspace.</small>
-                  {startMethod === "blank" ? <Icon name="check" size={17} /> : null}
-                </button>
-                <button
-                  className={startMethod === "import" ? "is-selected" : ""}
-                  type="button"
-                  onClick={() => setStartMethod("import")}
-                  aria-pressed={startMethod === "import"}
-                >
-                  <span>
-                    <Icon name="upload" size={20} />
-                  </span>
-                  <strong>Bring a source</strong>
-                  <small>
-                    {selectedCreate === "audiobook"
-                      ? "Import a TXT or DOCX manuscript."
-                      : selectedCreate === "transcription"
-                        ? "Choose owned audio or video."
-                        : "Upload an eligible source file."}
-                  </small>
-                  {startMethod === "import" ? <Icon name="check" size={17} /> : null}
-                </button>
-              </fieldset>
-
-              <div className="create-assurance">
-                <Icon name={selectedCreate === "voice" ? "voice" : "credits"} size={19} />
-                <p>
-                  {selectedCreate === "voice"
-                    ? "Real-person voices begin private and require identity, consent, and capture checks."
-                    : "No Studio Credits are reserved now. You’ll review a clear estimate before any generation runs."}
-                </p>
-              </div>
-
-              <div className="create-form-actions">
-                <button className="secondary-button" type="button" onClick={closeCreate}>
-                  Cancel
-                </button>
-                <button className="primary-button" type="submit">
-                  Continue to setup <Icon name="arrow" size={17} />
-                </button>
-              </div>
-            </form>
-          </div>
-        </div>
-      ) : null}
-
-      <div className={`toast${notice ? " is-visible" : ""}`} role="status" aria-live="polite">
-        <span>
-          <Icon name="check" size={17} />
-        </span>
-        <p>{notice ?? ""}</p>
-        {notice ? (
-          <button type="button" onClick={() => setNotice(null)} aria-label="Dismiss notification">
-            <Icon name="close" size={17} />
+        <div className="workspace-header-actions">
+          <button className="header-credit" type="button" onClick={() => { setCreditsOpen(true); document.querySelector("#credits")?.scrollIntoView(); }}>
+            <Icon name="credits" size={17} /><span>824</span><small>Studio Credits</small>
           </button>
+          <button className="quiet-icon-button" type="button" onClick={() => setNotice("No new notifications in this local scenario.")} aria-label="Notifications"><Icon name="bell" size={19} /></button>
+          <button className="workspace-avatar" type="button" aria-label="Open account menu, available in a later milestone">AT</button>
+          <button
+            className="workspace-menu-button"
+            type="button"
+            aria-label="Open Studio navigation"
+            aria-controls="workspace-mobile-menu"
+            aria-expanded={mobileNavOpen}
+            onClick={(event) => { menuPreviousFocusRef.current = event.currentTarget; setMobileNavOpen(true); }}
+          ><Icon name="menu" size={21} /></button>
+        </div>
+      </header>
+
+      <main className="workspace-main" id="studio-main">
+        <div className="scenario-note"><span>Foundation preview</span><p>Local fixture data · no generation or billing</p></div>
+
+        <motion.section className="workspace-intro" initial={shouldReduceMotion ? false : { opacity: 0, y: 16 }} animate={{ opacity: 1, y: 0 }} transition={{ ...motionTransition, duration: shouldReduceMotion ? 0 : 0.55 }}>
+          <div>
+            <p className="workspace-kicker">Personal workspace</p>
+            <h1>Pick up where the story paused.</h1>
+          </div>
+          <button className="workspace-primary" type="button" onClick={() => openCreate("audiobook")}><Icon name="plus" size={18} /> New project</button>
+        </motion.section>
+
+        <FocusProject
+          project={focusedProject}
+          playing={playingId === focusedProject.id}
+          onPlay={() => setPlayingId((id) => id === focusedProject.id ? null : focusedProject.id)}
+          onOpen={() => notifyProject(focusedProject)}
+        />
+
+        <section className="create-strip" id="create" aria-labelledby="create-heading">
+          <div className="workspace-section-heading">
+            <div><p className="workspace-kicker">Start</p><h2 id="create-heading">What are you making?</h2></div>
+            <p>Choose a path. You can move between tools later.</p>
+          </div>
+          <div className="create-choice-list">
+            {createActions.map((action) => (
+              <motion.button key={action.id} type="button" className="create-choice" onClick={() => openCreate(action.id)} whileHover={{ y: shouldReduceMotion ? 0 : -3 }} whileTap={{ scale: shouldReduceMotion ? 1 : 0.98 }}>
+                <span className={`create-choice-icon create-choice-icon--${action.tone}`}><Icon name={action.icon} size={20} /></span>
+                <span><strong>{action.label}</strong><small>{action.meta}</small></span>
+                <Icon name="arrow" size={17} />
+              </motion.button>
+            ))}
+          </div>
+        </section>
+
+        <section className="recent-work" id="projects" aria-labelledby="projects-heading">
+          <div className="workspace-section-heading projects-heading-row">
+            <div><p className="workspace-kicker">Recent work</p><h2 id="projects-heading">Projects</h2></div>
+            <button className="workspace-text-button" type="button" aria-expanded={browseOpen} aria-controls="project-browse-tools" onClick={() => setBrowseOpen((open) => !open)}><Icon name="search" size={16} /> {browseOpen ? "Close search" : "Search & filter"}</button>
+          </div>
+
+          <AnimatePresence initial={false}>
+            {browseOpen ? (
+              <motion.div id="project-browse-tools" className="project-browse-tools" initial={shouldReduceMotion ? false : { opacity: 0, height: 0 }} animate={{ opacity: 1, height: "auto" }} exit={shouldReduceMotion ? { opacity: 1, height: "auto" } : { opacity: 0, height: 0 }} transition={motionTransition}>
+                <label><span className="sr-only">Search projects</span><Icon name="search" size={17} /><input id="studio-project-search" type="search" placeholder="Search recent projects" value={search} onChange={(event) => setSearch(event.target.value)} /></label>
+                <div className="project-filters" aria-label="Filter project type">
+                  {filters.map((item) => <button key={item} type="button" className={filter === item ? "is-selected" : ""} aria-pressed={filter === item} onClick={() => setFilter(item)}>{item === "Sound Effect" ? "Effects" : item}</button>)}
+                </div>
+              </motion.div>
+            ) : null}
+          </AnimatePresence>
+
+          <div className="project-list" aria-live="polite">
+            <AnimatePresence initial={false} mode="popLayout">
+              {visibleProjects.map((project) => (
+                <ProjectRow key={project.id} project={project} playing={playingId === project.id} onPlay={() => setPlayingId((id) => id === project.id ? null : project.id)} onOpen={() => notifyProject(project)} />
+              ))}
+            </AnimatePresence>
+            {!visibleProjects.length ? <div className="workspace-empty"><p>No projects match this view.</p><button type="button" className="workspace-text-button" onClick={() => { setSearch(""); setFilter("All"); }}>Clear filters</button></div> : null}
+          </div>
+          {!browseOpen && filteredProjects.length > 3 ? (
+            <button className="show-more-projects" type="button" onClick={() => setShowAll((shown) => !shown)} aria-expanded={showAll}>{showAll ? "Show fewer projects" : `Show all ${filteredProjects.length} projects`} <Icon name="chevron" size={16} /></button>
+          ) : null}
+        </section>
+
+        <section className="workspace-disclosures" aria-label="Workspace status">
+          <div className="workspace-disclosure" id="activity">
+            <button type="button" aria-expanded={activityOpen} aria-controls="activity-content" onClick={() => setActivityOpen((open) => !open)}>
+              <span className="disclosure-icon"><span className="live-dot" />Activity</span>
+              <span className="disclosure-summary">2 active jobs</span>
+              <Icon name="chevron" size={18} />
+            </button>
+            <AnimatePresence initial={false}>
+              {activityOpen ? (
+                <motion.div id="activity-content" className="disclosure-content" initial={shouldReduceMotion ? false : { opacity: 0, height: 0 }} animate={{ opacity: 1, height: "auto" }} exit={shouldReduceMotion ? { opacity: 1, height: "auto" } : { opacity: 0, height: 0 }} transition={motionTransition}>
+                  {jobs.map((job) => <JobRow key={job.id} job={job} cancelling={cancelledJobs.includes(job.id)} onCancel={() => { setCancelledJobs((current) => current.includes(job.id) ? current : [...current, job.id]); setNotice(job.status === "Queued" ? `${job.title} will leave the local queue without a charge.` : `Cancellation requested for ${job.title}. This is a local scenario only.`); }} onOpen={() => setNotice(`${job.title} results selected. This fixture does not contain generated audio.`)} />)}
+                </motion.div>
+              ) : null}
+            </AnimatePresence>
+          </div>
+
+          <div className="workspace-disclosure" id="credits">
+            <button type="button" aria-expanded={creditsOpen} aria-controls="credits-content" onClick={() => setCreditsOpen((open) => !open)}>
+              <span className="disclosure-icon"><Icon name="credits" size={18} />Studio Credits</span>
+              <span className="disclosure-summary">824 available</span>
+              <Icon name="chevron" size={18} />
+            </button>
+            <AnimatePresence initial={false}>
+              {creditsOpen ? (
+                <motion.div id="credits-content" className="disclosure-content credit-disclosure" initial={shouldReduceMotion ? false : { opacity: 0, height: 0 }} animate={{ opacity: 1, height: "auto" }} exit={shouldReduceMotion ? { opacity: 1, height: "auto" } : { opacity: 0, height: 0 }} transition={motionTransition}>
+                  <div><span>Available</span><strong>824</strong></div><div><span>Reserved</span><strong>96</strong></div><div><span>Settled this grant</span><strong>80</strong></div>
+                  <p><Icon name="check" size={16} /> Credits roll over. The next 1,000-credit grant is Sep 1.</p>
+                </motion.div>
+              ) : null}
+            </AnimatePresence>
+          </div>
+        </section>
+      </main>
+
+      <AnimatePresence>
+        {mobileNavOpen ? (
+          <motion.div className="workspace-mobile-layer" initial={shouldReduceMotion ? false : { opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: shouldReduceMotion ? 1 : 0 }} transition={motionTransition}>
+            <button className="workspace-mobile-backdrop" type="button" onClick={() => setMobileNavOpen(false)} aria-label="Close Studio navigation" tabIndex={-1} />
+            <motion.div ref={menuRef} id="workspace-mobile-menu" className="workspace-mobile-menu" role="dialog" aria-modal="true" aria-labelledby="workspace-mobile-title" initial={shouldReduceMotion ? false : { x: "100%" }} animate={{ x: 0 }} exit={{ x: shouldReduceMotion ? 0 : "100%" }} transition={motionTransition}>
+              <div><h2 id="workspace-mobile-title"><StudioBrand compact /></h2><button ref={menuCloseRef} className="quiet-icon-button" type="button" onClick={() => setMobileNavOpen(false)} aria-label="Close navigation"><Icon name="close" size={21} /></button></div>
+              <nav aria-label="Mobile Studio navigation"><a href="#top" onClick={() => setMobileNavOpen(false)}>Home</a><a href="#create" onClick={() => setMobileNavOpen(false)}>Create</a><a href="#projects" onClick={() => setMobileNavOpen(false)}>Projects</a><a href="#activity" onClick={() => { setActivityOpen(true); setMobileNavOpen(false); }}>Activity <span>2</span></a></nav>
+              <Link href="/">View public Studio site <Icon name="arrow" size={17} /></Link>
+              <p>Foundation preview · local fixture data</p>
+            </motion.div>
+          </motion.div>
         ) : null}
-      </div>
-    </>
+      </AnimatePresence>
+
+      <AnimatePresence>
+        {createOpen ? (
+          <motion.div className="create-layer" initial={shouldReduceMotion ? false : { opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: shouldReduceMotion ? 1 : 0 }} transition={motionTransition}>
+            <button className="create-backdrop" type="button" onClick={() => setCreateOpen(false)} aria-label="Close create panel" tabIndex={-1} />
+            <motion.div ref={dialogRef} className="create-panel" role="dialog" aria-modal="true" aria-labelledby="create-panel-title" aria-describedby="create-panel-description" initial={shouldReduceMotion ? false : { opacity: 0, y: 22, scale: 0.985 }} animate={{ opacity: 1, y: 0, scale: 1 }} exit={shouldReduceMotion ? { opacity: 1, y: 0, scale: 1 } : { opacity: 0, y: 14, scale: 0.99 }} transition={motionTransition}>
+              <div className="create-panel-header">
+                <div><p className="workspace-kicker">Setup scenario</p><h2 id="create-panel-title">Start something new</h2><p id="create-panel-description">No Studio Credits are reserved in this foundation preview.</p></div>
+                <button ref={dialogCloseRef} className="quiet-icon-button" type="button" onClick={() => setCreateOpen(false)} aria-label="Close create panel"><Icon name="close" size={21} /></button>
+              </div>
+              <div className="create-type-list" aria-label="Creation type">
+                {createActions.map((action) => <button key={action.id} type="button" className={selectedCreate === action.id ? "is-selected" : ""} aria-pressed={selectedCreate === action.id} onClick={() => setSelectedCreate(action.id)}><Icon name={action.icon} size={18} /><span>{action.label}</span></button>)}
+              </div>
+              <form className="create-form" onSubmit={submitCreate}>
+                <div className="selected-create-summary"><span className={`create-choice-icon create-choice-icon--${selectedAction.tone}`}><Icon name={selectedAction.icon} size={22} /></span><div><h3>{selectedAction.label}</h3><p>{selectedAction.description}</p></div></div>
+                <label className="field-label" htmlFor="creation-name"><span>Working title</span><input id="creation-name" value={projectName} onChange={(event) => setProjectName(event.target.value)} placeholder={`Untitled ${selectedAction.label}`} autoComplete="off" /><small>Rename it any time.</small></label>
+                <fieldset className="start-methods"><legend>Starting point</legend><button type="button" className={startMethod === "blank" ? "is-selected" : ""} aria-pressed={startMethod === "blank"} onClick={() => setStartMethod("blank")}><Icon name="plus" size={19} /><span><strong>Start fresh</strong><small>Open a clean workspace.</small></span></button><button type="button" className={startMethod === "import" ? "is-selected" : ""} aria-pressed={startMethod === "import"} onClick={() => setStartMethod("import")}><Icon name="upload" size={19} /><span><strong>Bring a source</strong><small>{selectedCreate === "audiobook" ? "Import a TXT or DOCX manuscript." : selectedCreate === "transcription" ? "Choose audio you own." : "Upload an eligible source file."}</small></span></button></fieldset>
+                <div className="create-assurance"><Icon name={selectedCreate === "voice" ? "voice" : "credits"} size={19} /><p>{selectedCreate === "voice" ? "Real-person voices begin private and require identity, consent, and capture checks." : "A clear estimate will appear before any future generation runs."}</p></div>
+                <div className="create-form-actions"><button className="workspace-secondary" type="button" onClick={() => setCreateOpen(false)}>Cancel</button><button className="workspace-primary" type="submit">Continue to setup <Icon name="arrow" size={17} /></button></div>
+              </form>
+            </motion.div>
+          </motion.div>
+        ) : null}
+      </AnimatePresence>
+
+      <AnimatePresence>
+        {notice ? (
+          <motion.div className="workspace-toast" role="status" aria-live="polite" initial={shouldReduceMotion ? false : { opacity: 0, y: 12 }} animate={{ opacity: 1, y: 0 }} exit={shouldReduceMotion ? { opacity: 1, y: 0 } : { opacity: 0, y: 8 }} transition={motionTransition}>
+            <Icon name="check" size={17} /><p>{notice}</p><button type="button" onClick={() => setNotice(null)} aria-label="Dismiss notification"><Icon name="close" size={16} /></button>
+          </motion.div>
+        ) : null}
+      </AnimatePresence>
+    </div>
   );
 }

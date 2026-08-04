@@ -22,6 +22,7 @@ The repository now contains the first M1 foundation slice: separate Studio, Book
 | Engines, licenses, adapters, and benchmarks | [AI Model Strategy](04-ai-model-strategy.md) |
 | Plans, credits, coins, royalties, and payouts | [Commerce Specification](05-plans-credits-coins-commerce.md) |
 | Consent, rights, moderation, privacy, and provenance | [Trust & Safety](06-trust-safety-publishing.md) |
+| Visual system, components, motion, and UI review | [Interface Design System](08-interface-design-system.md) |
 
 If documents conflict, implementation stops until Product and the relevant policy owner publish a versioned resolution. Financial and safety invariants take precedence over a convenience behavior.
 
@@ -64,6 +65,7 @@ Exit criteria:
 Deliver:
 
 - Bun workspace with Studio, Books, Admin, shared UI/contracts/config;
+- quiet, source-owned shared interface tokens and component behavior, including reduced-motion and border/density budgets;
 - modular control API and generated clients;
 - centralized authentication and personal workspace tenancy;
 - PostgreSQL migrations, RLS, outbox, idempotency, audit, and base ledgers;
@@ -290,6 +292,8 @@ Values are provisional until target infrastructure tests; relaxing them requires
 - All desktop editor capabilities have a documented and tested touch path.
 - Reduced-motion mode removes non-essential motion without hiding status.
 - Waveform, color, and audio-only state have text/programmatic equivalents.
+- Surface-and-border audits show that visual grouping remains clear without repeated enclosing cards or separators.
+- Motion review finds no workflow-blocking animation, unbounded ambient effect, or canvas/WebGL dependency for core content or controls.
 
 ### Recovery
 
@@ -399,7 +403,7 @@ Internal interfaces may preserve future compatibility, but no placeholder UI sho
 
 The pre-build pack is complete when:
 
-- all eight Markdown files exist and link correctly;
+- all nine Markdown files exist and link correctly;
 - terminology and decisions agree across documents;
 - primary sources support time-sensitive model/legal claims;
 - every external blocker has an owner and launch-gate treatment;

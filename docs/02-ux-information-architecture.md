@@ -1,6 +1,6 @@
 # UX Information Architecture and Interaction Specification
 
-**Status:** Approved product-design baseline
+**Status:** Approved product-design baseline; quiet-interface revision approved 2026-08-04
 
 **Applies to:** Studio, Books, and Admin responsive web applications
 
@@ -21,6 +21,7 @@ These surfaces share identity and platform data, but they do not share one overs
 - **Audio is visible and controllable.** Waveforms, speaker identity, timing, generation state, and cost are legible wherever audio is created or played.
 - **AI proposes; people direct.** AI may accelerate a workflow, but accepted, edited, and locked human choices remain authoritative.
 - **Simple first, precision on demand.** New users can complete a guided flow; advanced editing is progressively disclosed without becoming a separate product.
+- **Quiet by default.** Each view gives one task the strongest visual weight. Spacing, typography, tone, and motion establish hierarchy before borders, cards, or decoration are introduced.
 - **Every expensive action is predictable.** The UI identifies the resource being spent, gives a preflight estimate, and records the final transaction.
 - **Long work survives navigation and failure.** Generation, export, publishing, purchases, and downloads are durable jobs with recoverable state.
 - **Mobile is adaptive, not reduced.** Every feature is available on touch devices; dense desktop workspaces become focused screens, sheets, and dedicated editors.
@@ -466,22 +467,25 @@ Additional rules:
 - Touch targets are at least 44 × 44 CSS px with safe spacing; mobile controls respect notches and browser safe areas.
 - The experience remains operable at 200% zoom and with browser text scaling without loss of action or information.
 
-## 13. Visual direction: cinematic and precise
+## 13. Visual direction: quiet, cinematic, and precise
 
 ### 13.1 Shared brand language
 
-AudiLink uses a restrained **signal-and-stage** visual system: layered fields suggest a dark recording stage; fine waveform/spectral lines indicate activity and timing; warm light identifies human voice and story; cool light identifies tooling and system state. Audio-reactive graphics are functional or momentary, not ornamental wallpaper.
+AudiLink uses a restrained **signal-and-stage** visual system: deep tonal fields suggest a recording stage; fine waveform or spectral lines indicate real activity and timing; warm light identifies human voice and story; cool light identifies tooling and system state. The product should feel composed and spacious before it feels technical. Audio-reactive graphics are functional or momentary, not ornamental wallpaper.
 
 - Use a high-legibility contemporary sans for product UI and data. Books may add an editorial display face for titles and campaign moments, never controls or long body copy.
-- Prefer a precise grid, moderate radii, clear borders/elevation, and intentional rectangular controls. Capsules are reserved for tags, filters, compact state, and segmented choices.
+- Prefer a precise grid, moderate radii, generous breathing room, and intentional rectangular controls. Group primarily with alignment, spacing, type, and subtle tonal change. Capsules are reserved for tags, filters, compact state, and segmented choices.
+- A section has no enclosing card by default. Add a surface only when it communicates a distinct interaction layer, selected object, temporary overlay, or independently scrolling region. Add a separator only when users need a semantic boundary; never outline every item in a list, metric, or toolbar.
+- Each viewport has one dominant task, at most one adjacent secondary action, and a short set of contextual actions. Lower-frequency actions move into disclosure, an inspector, or an overflow menu without becoming undiscoverable.
 - Studio defaults to a deep ink/graphite production environment with restrained spectral cyan/violet and warm amber/coral accents. Track colors have redundant labels/icons.
-- Books uses richer cover-led color, controlled cinematic gradients, and warmer reading surfaces while retaining the shared type, spacing, controls, wallet, and player language.
-- Admin is visually sober and data-forward; status and risk outrank decorative brand moments.
+- Studio has a welcoming public landing route separate from its production workspace. The landing may introduce the product through one carefully bounded interactive audio moment; the workspace stays still until work, playback, or system state justifies movement.
+- Books uses richer cover-led color, controlled cinematic gradients, warmer reading surfaces, and editorial whitespace while retaining the shared type, spacing, controls, wallet, and player language. A title or active book—not a grid of equal cards—anchors each view.
+- Admin is visually sober and decision-forward. Its opening view prioritizes the small set of exceptions that require action; secondary metrics, configuration, and audit detail are progressively disclosed. Status and risk outrank decorative brand moments.
 - Light and dark themes both meet contrast requirements. Cover-derived colors pass through contrast-safe overlays rather than styling controls directly.
 
 ### 13.2 Interaction character
 
-The product should feel responsive through precise selection states, waveform scrubbing, take transitions, progressive job feedback, and continuity between a book cover and player. It should not simulate a physical mixing desk or use novelty animation at the expense of clarity.
+The product should feel responsive through precise selection states, waveform scrubbing, take transitions, progressive job feedback, and continuity between a book cover and player. Feedback stays close to the object that changed. It should not simulate a physical mixing desk, animate merely because content entered the viewport, or use novelty animation at the expense of clarity.
 
 ## 14. Motion and accessibility
 
@@ -489,9 +493,13 @@ WCAG 2.2 AA is a release requirement, not a post-launch enhancement.
 
 ### 14.1 Motion
 
-- Micro-interactions use approximately 120–200 ms; panel/view transitions use approximately 180–300 ms. Motion communicates relationship, progress, or confirmation.
-- Waveforms animate only during playback, recording, or meaningful processing state. No perpetual equalizers, parallax, background particles, or auto-moving carousels.
-- `prefers-reduced-motion` removes nonessential movement, replaces spatial transitions with immediate/fade state changes, and leaves progress readable as text.
+- Motion has one of four jobs: preserve spatial continuity, explain a state change, confirm direct manipulation, or show real progress. If it does none of these, remove it.
+- Press, hover, focus, and compact feedback generally use 100–160 ms. State and disclosure transitions use 180–260 ms. A genuine route, sheet, or large workspace transition may use 260–420 ms when continuity would otherwise be lost.
+- Direct manipulation may use a critically damped spring. Navigation and status changes use calm easing and do not bounce. Workspace scale stays between 0.98 and 1.02; blur is never the primary transition and does not persist beyond 120 ms.
+- Layout and presence transitions keep an object visually connected to its source. Entry staggering is limited to three meaningful groups and no more than 120 ms total. User input can interrupt every animation immediately.
+- Waveforms animate only during playback, recording, or meaningful processing state. No perpetual equalizers, parallax, background particles, auto-moving carousels, cursor followers, or ambient loops inside production, reading, or operations views.
+- `prefers-reduced-motion` removes nonessential transforms and smooth scrolling, replaces spatial transitions with immediate changes or a crossfade no longer than 100 ms, disables canvas/WebGL ornament, and leaves progress readable as text.
+- Canvas/WebGL effects are progressive enhancement for a bounded Studio marketing or campaign moment only. At most one effect may be active in a viewport; it may not sit behind text controls, accept required input, run while offscreen, or appear in the editor, player, checkout, moderation, finance, or configuration surfaces.
 - Playback and samples start only after user action. UI sounds are off by default and never replace visible feedback.
 
 ### 14.2 Accessibility requirements
@@ -555,5 +563,9 @@ A design is ready for implementation only when all criteria below are demonstrat
 15. First-use Studio onboarding creates/resumes the personal workspace, shows the provisional Free plan and Studio Credit balance, offers all five first tasks, identifies chargeable steps, and keeps optional seller verification separate.
 16. English is labeled GA and only benchmark-approved additional languages receive a visible Beta label across creation, output, Marketplace, Books, and player details.
 17. Cinematic assets and transitions do not block the Books mobile LCP target of 2.5 seconds at the 75th percentile or playback-start targets of 1 second cached and 3 seconds uncached at the 95th percentile on the representative profiles.
+18. A visual-density review confirms that each viewport has one dominant task, no more than one adjacent secondary action, and no permanently visible control that belongs in contextual disclosure.
+19. A surface-and-border audit confirms that cards, separators, shadows, and outlines each communicate a real boundary or state; repeated content is not presented as a wall of independently outlined boxes.
+20. Every animation is annotated with its purpose, duration, interruption behavior, and reduced-motion equivalent. Decorative canvas/WebGL is absent from task surfaces and never delays content or input.
+21. Layout and presence transitions introduce no cumulative layout shift, preserve focus/scroll intent, and do not make a rapid workflow wait for animation completion.
 
 This document is the UX contract. Detailed commerce policy, model capability, safety policy, and API specifications may refine the data shown, but must preserve these ownership boundaries, user-facing distinctions, state guarantees, accessibility requirements, and full mobile parity.

@@ -1,36 +1,43 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# AudiLink Studio
 
-## Getting Started
+The Studio surface of AudiLink. It currently contains two deliberately different experiences:
 
-First, run the development server:
+- `/` — the public Studio landing page, with an interactive visual-only audio study and a restrained Canvas UI Ripple enhancement.
+- `/studio` — a local-fixture workspace preview for resuming projects, entering each of the five creation flows, and inspecting jobs and Studio Credits.
 
-```bash
-npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
+The workspace is not connected to authentication, billing, model inference, or durable storage yet. UI messages label those scenarios honestly; interacting with them cannot generate audio or charge credits.
+
+## Interaction principles
+
+- Motion is used for state, layout, and gesture continuity—not ambient decoration.
+- `prefers-reduced-motion` removes Motion transitions and prevents the Ripple WebGL instance from starting.
+- Ripple is nonessential: content remains ordinary interactive HTML when the experimental canvas path or WebGL is unavailable, and rendering pauses while off-screen.
+- Keyboard focus is trapped and restored for modal and mobile navigation surfaces.
+
+See [`components/canvasui/NOTICE.md`](components/canvasui/NOTICE.md) for the copied Canvas UI component’s provenance and license terms.
+
+## Run locally
+
+From the repository root:
+
+```powershell
+bun run dev:studio
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+Or from this directory:
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+```powershell
+bun run dev
+```
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+Open `http://localhost:3000` for the landing page or `http://localhost:3000/studio` for the workspace preview.
 
-## Learn More
+## Validate
 
-To learn more about Next.js, take a look at the following resources:
+```powershell
+bun run lint
+bun run typecheck
+bun run build
+```
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
-
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
-
-## Deploy on Vercel
-
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
-
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+Next.js 16 guidance in `node_modules/next/dist/docs/` is authoritative for framework behavior in this app.
